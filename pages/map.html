@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>足迹 - 我们的故事</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .main { max-width: 1000px; }
+    </style>
+</head>
+<body>
+
+<div class="main">
+    <h1 class="page-title">我们的足迹</h1>
+    <p class="page-subtitle">一起去过的每一个地方</p>
+    <div id="map"></div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="/js/main.js"></script>
+<script>
+loadJSON('/data/map.json').then(places => {
+    const map = L.map('map').setView(
+        places.length > 0 ? [places[0].lat, places[0].lng] : [35, 110],
+        places.length > 1 ? 5 : 12
+    );
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap',
+        maxZoom: 18
+    }).addTo(map);
+
+    if (places.length === 0) {
+        // Show a default view of China
+        map.setView([32, 110], 4);
+    }
+
+    places.forEach(place => {
+        const popupContent = `
+            <div class="map-popup">
+                <strong>${place.title}</strong>
+                ${place.image ? `<br><img src="${place.image}" alt="${place.title}">` : ''}
+                <p>${place.desc}</p>
+            </div>
+        `;
+        L.marker([place.lat, place.lng])
+            .addTo(map)
+            .bindPopup(popupContent);
+    });
+}).catch(() => {
+    document.getElementById('map').innerHTML =
+        '<p style="text-align:center;padding:100px 0;color:var(--text-light)">足迹加载中...</p>';
+});
+</script>
+</body>
+</html>

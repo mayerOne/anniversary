@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>刮刮乐 - 惊喜时刻 🎁</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .main { max-width: 600px; }
+        .page-subtitle { margin-bottom: 32px; }
+    </style>
+</head>
+<body>
+
+<div class="main">
+    <h1 class="page-title">🎁 惊喜时刻</h1>
+    <p class="page-subtitle">刮开涂层，找到属于你的惊喜</p>
+
+    <div class="scratch-container">
+        <div class="scratch-wrapper" id="scratchWrapper">
+            <!-- 底层结果 -->
+            <div class="scratch-result" id="scratchResult">
+                <img src="" alt="我们的照片" id="prizeImage">
+                <div class="message" id="prizeMessage">
+                    两周年快乐 ❤<br>
+                    遇见你是我最幸运的事
+                </div>
+                <div class="coupon" id="prizeCoupon">
+                    💌 此券可兑换一次专属约会<br>
+                    由持券人指定时间 & 内容
+                </div>
+            </div>
+            <!-- 涂层 Canvas -->
+            <canvas class="scratch-canvas" id="scratchCanvas"></canvas>
+        </div>
+        <div class="scratch-hint" id="scratchHint">👆 用手指刮开看看</div>
+        <button class="btn btn-primary" id="resetBtn" style="margin-top:20px;display:none" onclick="resetScratch()">再刮一次</button>
+    </div>
+</div>
+
+<script src="/js/main.js"></script>
+<script>
+const wrapper = document.getElementById('scratchWrapper');
+const canvas = document.getElementById('scratchCanvas');
+const ctx = canvas.getContext('2d');
+const hint = document.getElementById('scratchHint');
+const resetBtn = document.getElementById('resetBtn');
+const prizeImg = document.getElementById('prizeImage');
+
+let isDrawing = false;
+let percentRevealed = 0;
+let isRevealed = false;
+
+// === 配置 ===
+// 在这里换上你们的合照路径和想说的话
+const PRIZE_CONFIG = {
+    image: '',  // 例如 '/assets/images/our-photo.jpg'
+    message: '两周年快乐 ❤\n遇见你是我最幸运的事',
+    coupon: '💌 此券可兑换一次专属约会\n由持券人指定时间 & 内容'
+};
+
+// 如果有照片就显示，否则只显示文字
+if (PRIZE_CONFIG.image) {
+    prizeImg.src = PRIZE_CONFIG.image;
+    prizeImg.style.display = 'block';
+} else {
+    prizeImg.style.display = 'none';
+}
+document.getElementById('prizeMessage').innerHTML = PRIZE_CONFIG.message.replace(/\n/g, '<br>');
+document.getElementById('prizeCoupon').innerHTML = PRIZE_CONFIG.coupon.replace(/\n/g, '<br>');
+
+// === Canvas 初始化 ===
+function resizeCanvas() {
+    const rect = wrapper.getBoundingClientRect();
+    canvas.width = rect.width;
+    canvas.height = rect.height;
+    drawCoating();
+}
+
+function drawCoating() {
+    // 灰色渐变涂层
+    const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+    gradient.addColorStop(0, '#c0a0a0');
+    gradient.addColorStop(0.5, '#d0b0b0');
+    gradient.addColorStop(1, '#c0a0a0');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // 涂层上的提示文字
+    ctx.fillStyle = 'rgba(255,255,255,0.8)';
+    ctx.font = `${Math.max(16, canvas.width * 0.05)}px Georgia, serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('✨ 刮开有惊喜 ✨', canvas.width / 2, canvas.height / 2);
+
+    ctx.font = `${Math.max(12, canvas.width * 0.035)}px sans-serif`;
+    ctx.fillStyle = 'rgba(255,255,255,0.5)';
+    ctx.fillText('用手指轻轻刮开', canvas.width / 2, canvas.height / 2 + 40);
+}
+
+// === 刮涂层逻辑 ===
+function getPos(e) {
+    const rect = canvas.getBoundingClientRect();
+    const touch = e.touches ? e.touches[0] : e;
+    return {
+        x: (touch.clientX - rect.left) * (canvas.width / rect.width),
+        y: (touch.clientY - rect.top) * (canvas.height / rect.height)
+    };
+}
+
+function scratch(x, y) {
+    if (isRevealed) return;
+    ctx.globalCompositeOperation = 'destination-out';
+    ctx.beginPath();
+    ctx.arc(x, y, Math.max(20, canvas.width * 0.06), 0, Math.PI * 2);
+    ctx.fill();
+    // 恢复默认
+    ctx.globalCompositeOperation = 'source-over';
+}
+
+function calcPercent() {
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const pixels = imageData.data;
+    let transparent = 0;
+    for (let i = 3; i < pixels.length; i += 4) {
+        if (pixels[i] === 0) transparent++;
+    }
+    return (transparent / (pixels.length / 4)) * 100;
+}
+
+function checkReveal() {
+    if (isRevealed) return;
+    percentRevealed = calcPercent();
+    if (percentRevealed > 50) {
+        isRevealed = true;
+        canvas.style.display = 'none';
+        hint.textContent = '🎉 恭喜你发现了惊喜！';
+        resetBtn.style.display = 'inline-block';
+    }
+}
+
+// === 事件监听 ===
+canvas.addEventListener('mousedown', (e) => {
+    isDrawing = true;
+    const pos = getPos(e);
+    scratch(pos.x, pos.y);
+});
+
+canvas.addEventListener('mousemove', (e) => {
+    if (!isDrawing) return;
+    const pos = getPos(e);
+    scratch(pos.x, pos.y);
+    checkReveal();
+});
+
+canvas.addEventListener('mouseup', () => { isDrawing = false; });
+canvas.addEventListener('mouseleave', () => { isDrawing = false; });
+
+canvas.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    isDrawing = true;
+    const pos = getPos(e);
+    scratch(pos.x, pos.y);
+}, { passive: false });
+
+canvas.addEventListener('touchmove', (e) => {
+    e.preventDefault();
+    if (!isDrawing) return;
+    const pos = getPos(e);
+    scratch(pos.x, pos.y);
+    checkReveal();
+}, { passive: false });
+
+canvas.addEventListener('touchend', () => { isDrawing = false; });
+
+// === 重置 ===
+function resetScratch() {
+    isRevealed = false;
+    canvas.style.display = 'block';
+    hint.textContent = '👆 用手指刮开看看';
+    resetBtn.style.display = 'none';
+    drawCoating();
+}
+
+// === 初始化 ===
+window.addEventListener('resize', resizeCanvas);
+// 等待布局稳定后初始化
+setTimeout(resizeCanvas, 100);
+</script>
+</body>
+</html>

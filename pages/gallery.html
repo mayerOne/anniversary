@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>照片墙 - 我们的故事</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<div class="main">
+    <h1 class="page-title">照片墙</h1>
+    <p class="page-subtitle">用照片留住美好瞬间</p>
+    <div class="gallery-grid" id="gallery"></div>
+</div>
+
+<!-- Lightbox -->
+<div class="lightbox" id="lightbox">
+    <span class="lightbox-close">&times;</span>
+    <img id="lightboxImg" src="" alt="">
+</div>
+
+<script src="/js/main.js"></script>
+<script>
+const photos = [
+    // 把你的照片放在 /assets/images/ 目录，然后在这里添加引用
+    // { src: '/assets/images/photo1.jpg', alt: '第一次约会' },
+    // { src: '/assets/images/photo2.jpg', alt: '一起旅行' },
+];
+
+const gallery = document.getElementById('gallery');
+const lightbox = document.getElementById('lightbox');
+const lightboxImg = document.getElementById('lightboxImg');
+
+if (photos.length === 0) {
+    gallery.innerHTML = '<p style="grid-column:1/-1;text-align:center;color:var(--text-light);padding:60px 0">照片整理中，敬请期待 💕</p>';
+} else {
+    photos.forEach(photo => {
+        const item = document.createElement('div');
+        item.className = 'gallery-item';
+        item.innerHTML = `<img src="${photo.src}" alt="${photo.alt}">`;
+        item.addEventListener('click', () => {
+            lightboxImg.src = photo.src;
+            lightbox.classList.add('open');
+        });
+        gallery.appendChild(item);
+    });
+}
+
+lightbox.addEventListener('click', () => {
+    lightbox.classList.remove('open');
+});
+</script>
+</body>
+</html>
