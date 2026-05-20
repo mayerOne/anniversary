@@ -4,15 +4,350 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>两周年快乐 ❤</title>
-    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="./css/style.css">
+    <style>
+        :root {
+            --bg-start: #fef5f0;
+            --bg-end: #fce4ec;
+        }
+
+        body {
+            overflow-x: hidden;
+            background: linear-gradient(180deg, var(--bg-start) 0%, var(--bg-end) 50%, var(--bg-start) 100%);
+            min-height: 100vh;
+        }
+
+        /* 浮动花瓣 */
+        .petal {
+            position: fixed;
+            pointer-events: none;
+            z-index: 0;
+            animation: fall linear infinite;
+            opacity: 0.6;
+            font-size: 24px;
+        }
+
+        @keyframes fall {
+            0% {
+                transform: translateY(-100px) rotate(0deg) translateX(0);
+                opacity: 0;
+            }
+            10% {
+                opacity: 0.6;
+            }
+            90% {
+                opacity: 0.6;
+            }
+            100% {
+                transform: translateY(105vh) rotate(720deg) translateX(80px);
+                opacity: 0;
+            }
+        }
+
+        /* 密码锁 */
+        .password-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 999;
+            background: radial-gradient(ellipse at center, #fce4ec 0%, #f8d0dc 40%, #e8a0b4 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.8s ease, visibility 0.8s ease;
+        }
+
+        .password-overlay.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        .password-box {
+            text-align: center;
+            padding: 48px 40px;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 24px;
+            box-shadow: 0 20px 60px rgba(200, 100, 120, 0.2);
+            max-width: 400px;
+            width: 90%;
+            animation: fadeInUp 0.8s ease;
+        }
+
+        .password-box .icon {
+            font-size: 56px;
+            margin-bottom: 16px;
+            animation: heartbeat 1.5s ease-in-out infinite;
+        }
+
+        @keyframes heartbeat {
+            0%, 100% { transform: scale(1); }
+            25% { transform: scale(1.15); }
+            50% { transform: scale(1); }
+            75% { transform: scale(1.15); }
+        }
+
+        .password-box h1 {
+            font-family: var(--font-serif);
+            font-size: 26px;
+            color: var(--primary-dark);
+            margin-bottom: 8px;
+        }
+
+        .password-box .hint {
+            color: var(--text-light);
+            font-size: 14px;
+            margin-bottom: 28px;
+        }
+
+        .password-input {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            margin-bottom: 12px;
+        }
+
+        .password-input input {
+            width: 44px;
+            height: 52px;
+            text-align: center;
+            font-size: 22px;
+            border: 2px solid #e8c0c8;
+            border-radius: 14px;
+            outline: none;
+            font-family: var(--font-serif);
+            color: var(--text);
+            background: rgba(255, 255, 255, 0.9);
+            transition: border-color 0.3s, box-shadow 0.3s, transform 0.2s;
+            -webkit-appearance: none;
+        }
+
+        .password-input input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(232, 160, 180, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .password-error {
+            color: #e74c3c;
+            font-size: 13px;
+            min-height: 20px;
+            transition: all 0.3s;
+        }
+
+        /* 主内容 */
+        .hero {
+            position: relative;
+            z-index: 1;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 40px 24px;
+        }
+
+        .hero-badge {
+            display: inline-block;
+            padding: 6px 20px;
+            background: rgba(232, 160, 180, 0.15);
+            border: 1px solid var(--primary);
+            border-radius: 20px;
+            font-size: 13px;
+            color: var(--primary-dark);
+            margin-bottom: 24px;
+            animation: fadeInUp 1s ease;
+            letter-spacing: 1px;
+        }
+
+        .hero-title {
+            font-family: var(--font-serif);
+            font-size: clamp(32px, 8vw, 60px);
+            color: var(--primary-dark);
+            margin-bottom: 8px;
+            animation: fadeInUp 1s ease 0.15s both;
+            text-shadow: 0 2px 8px rgba(212, 120, 143, 0.15);
+            line-height: 1.3;
+        }
+
+        .hero-title .name {
+            display: inline-block;
+            background: linear-gradient(135deg, #e8a0b4, #d4788f);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-subtitle {
+            font-size: 16px;
+            color: var(--text-light);
+            margin-bottom: 40px;
+            animation: fadeInUp 1s ease 0.3s both;
+            letter-spacing: 2px;
+        }
+
+        /* 倒计时 */
+        .countdown {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 48px;
+            animation: fadeInUp 1s ease 0.45s both;
+        }
+
+        .countdown-item {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 18px 22px;
+            min-width: 85px;
+            box-shadow: 0 4px 20px rgba(200, 150, 140, 0.12);
+            border: 1px solid rgba(232, 160, 180, 0.2);
+            transition: transform 0.3s;
+        }
+
+        .countdown-item:hover {
+            transform: translateY(-3px);
+        }
+
+        .countdown-num {
+            font-size: 36px;
+            font-weight: 700;
+            color: var(--primary-dark);
+            font-family: var(--font-serif);
+            line-height: 1.2;
+            transition: all 0.3s;
+        }
+
+        .countdown-label {
+            font-size: 12px;
+            color: var(--text-light);
+            margin-top: 2px;
+            letter-spacing: 1px;
+        }
+
+        /* 入口按钮组 */
+        .hero-actions {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            animation: fadeInUp 1s ease 0.6s both;
+        }
+
+        .btn-enter {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 14px 40px;
+            border: none;
+            border-radius: 50px;
+            font-size: 17px;
+            font-family: var(--font-sans);
+            cursor: pointer;
+            transition: all 0.3s;
+            background: linear-gradient(135deg, #e8a0b4 0%, #d4788f 100%);
+            color: #fff;
+            box-shadow: 0 6px 25px rgba(212, 120, 143, 0.35);
+            text-decoration: none;
+            letter-spacing: 1px;
+        }
+
+        .btn-enter:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 35px rgba(212, 120, 143, 0.45);
+        }
+
+        .btn-enter:active {
+            transform: translateY(0);
+        }
+
+        .hero-nav-links {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 8px;
+        }
+
+        .hero-nav-links a {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            color: var(--text-light);
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            border: 1px solid var(--border);
+            transition: all 0.3s;
+            text-decoration: none;
+        }
+
+        .hero-nav-links a:hover {
+            background: var(--primary);
+            color: #fff;
+            border-color: var(--primary);
+            transform: translateY(-1px);
+        }
+
+        /* 底部文案 */
+        .hero-footer {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 12px;
+            color: var(--text-light);
+            opacity: 0.7;
+            animation: fadeInUp 1s ease 0.9s both;
+            white-space: nowrap;
+        }
+
+        @media (max-width: 600px) {
+            .password-box {
+                padding: 36px 24px;
+            }
+            .password-box .icon {
+                font-size: 44px;
+            }
+            .password-box h1 {
+                font-size: 22px;
+            }
+            .password-input input {
+                width: 40px;
+                height: 48px;
+                font-size: 20px;
+                border-radius: 12px;
+            }
+            .countdown {
+                gap: 10px;
+            }
+            .countdown-item {
+                padding: 14px 16px;
+                min-width: 65px;
+                border-radius: 14px;
+            }
+            .countdown-num {
+                font-size: 28px;
+            }
+            .hero-title {
+                font-size: clamp(28px, 10vw, 44px);
+            }
+        }
+    </style>
 </head>
 <body>
 
 <!-- 密码锁 -->
 <div class="password-overlay" id="passwordOverlay">
     <div class="password-box">
-        <h1>❤ 我们的故事</h1>
-        <p>请输入密码进入</p>
+        <div class="icon">💝</div>
+        <h1>我们的故事</h1>
+        <p class="hint">请输入密码，解锁我们的回忆</p>
         <div class="password-input" id="passwordInput">
             <input type="password" maxlength="1" inputmode="numeric" pattern="[0-9]" autofocus>
             <input type="password" maxlength="1" inputmode="numeric" pattern="[0-9]">
@@ -25,10 +360,11 @@
     </div>
 </div>
 
-<!-- 首页主内容 -->
+<!-- 主内容 -->
 <div class="hero" id="hero">
+    <div class="hero-badge">💕 TWO YEARS</div>
     <h1 class="hero-title">两周年快乐</h1>
-    <p class="hero-date">2024.06.10 — 2026.06.10</p>
+    <p class="hero-subtitle">2024.06.10 — 2026.06.10</p>
 
     <div class="countdown" id="countdown">
         <div class="countdown-item">
@@ -49,20 +385,53 @@
         </div>
     </div>
 
-    <div class="hero-enter">
-        <a href="/pages/timeline.html" class="btn btn-primary">开始回忆之旅 →</a>
+    <div class="hero-actions">
+        <a href="./pages/timeline.html" class="btn-enter">开始回忆之旅 ✨</a>
+        <div class="hero-nav-links">
+            <a href="./pages/gallery.html">照片墙</a>
+            <a href="./pages/map.html">我们的足迹</a>
+            <a href="./pages/letters.html">情书</a>
+            <a href="./pages/scratch.html">🎁 惊喜</a>
+        </div>
     </div>
 </div>
 
-<script src="/js/main.js"></script>
+<div class="hero-footer">Made with ♥ for you</div>
+
+<script src="./js/main.js"></script>
 <script>
+// === 浮动花瓣 ===
+(function() {
+    const petals = ['🌸', '💮', '🌷', '💕', '✨', '🌺', '💖', '🌹'];
+    const container = document.body;
+
+    function createPetal() {
+        const petal = document.createElement('span');
+        petal.className = 'petal';
+        petal.textContent = petals[Math.floor(Math.random() * petals.length)];
+        petal.style.left = Math.random() * 100 + '%';
+        petal.style.fontSize = (16 + Math.random() * 20) + 'px';
+        petal.style.animationDuration = (8 + Math.random() * 12) + 's';
+        petal.style.animationDelay = Math.random() * 3 + 's';
+        container.appendChild(petal);
+
+        setTimeout(() => {
+            petal.remove();
+        }, 15000);
+    }
+
+    for (let i = 0; i < 12; i++) {
+        setTimeout(createPetal, i * 600);
+    }
+    setInterval(createPetal, 3000);
+})();
+
 // === 密码锁 ===
 const CORRECT_PASSWORD = '980711';
 const inputs = document.querySelectorAll('#passwordInput input');
 const overlay = document.getElementById('passwordOverlay');
-const error = document.getElementById('passwordError');
+const pwdError = document.getElementById('passwordError');
 
-// 检查是否已解锁
 if (localStorage.getItem('anniversary_unlocked') === 'true') {
     overlay.classList.add('hidden');
 }
@@ -89,11 +458,14 @@ function checkPassword() {
     if (pwd === CORRECT_PASSWORD) {
         localStorage.setItem('anniversary_unlocked', 'true');
         overlay.classList.add('hidden');
-        error.textContent = '';
+        pwdError.textContent = '';
+        // 密码正确后启用音乐
+        if (typeof initMusic === 'function') initMusic();
     } else {
-        error.textContent = '密码错误，再试一次 ✨';
-        inputs.forEach(i => i.value = '');
+        pwdError.textContent = '密码不对哦，再试一次 ✨';
+        inputs.forEach(i => { i.value = ''; i.style.borderColor = '#e74c3c'; });
         inputs[0].focus();
+        setTimeout(() => inputs.forEach(i => i.style.borderColor = ''), 500);
     }
 }
 
@@ -106,9 +478,9 @@ function updateCountdown() {
 
     if (diff <= 0) {
         document.getElementById('days').textContent = '🎉';
-        document.getElementById('hours').textContent = '就';
-        document.getElementById('minutes').textContent = '是';
-        document.getElementById('seconds').textContent = '今';
+        document.getElementById('hours').textContent = '永';
+        document.getElementById('minutes').textContent = '远';
+        document.getElementById('seconds').textContent = '❤';
         return;
     }
 

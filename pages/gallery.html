@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>照片墙 - 我们的故事</title>
-    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="../css/style.css">
 </head>
 <body>
 
@@ -20,13 +20,18 @@
     <img id="lightboxImg" src="" alt="">
 </div>
 
-<script src="/js/main.js"></script>
+<script src="../js/main.js"></script>
 <script>
 const photos = [
-    // 把你的照片放在 /assets/images/ 目录，然后在这里添加引用
-    // { src: '/assets/images/photo1.jpg', alt: '第一次约会' },
-    // { src: '/assets/images/photo2.jpg', alt: '一起旅行' },
-];
+	    { src: 'https://picsum.photos/seed/love1/600/600', alt: '第一次约会' },
+	    { src: 'https://picsum.photos/seed/love2/600/600', alt: '看日落' },
+	    { src: 'https://picsum.photos/seed/love3/600/600', alt: '旅行' },
+	    { src: 'https://picsum.photos/seed/love4/600/600', alt: '情人节' },
+	    { src: 'https://picsum.photos/seed/love5/600/600', alt: '你的笑容' },
+	    { src: 'https://picsum.photos/seed/love6/600/600', alt: '一起做饭' },
+	    { src: 'https://picsum.photos/seed/love7/600/600', alt: '圣诞' },
+	    { src: 'https://picsum.photos/seed/love8/600/600', alt: '最好的我们' },
+	];
 
 const gallery = document.getElementById('gallery');
 const lightbox = document.getElementById('lightbox');

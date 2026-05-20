@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>刮刮乐 - 惊喜时刻 🎁</title>
-    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="../css/style.css">
     <style>
         .main { max-width: 600px; }
         .page-subtitle { margin-bottom: 32px; }
@@ -38,7 +38,7 @@
     </div>
 </div>
 
-<script src="/js/main.js"></script>
+<script src="../js/main.js"></script>
 <script>
 const wrapper = document.getElementById('scratchWrapper');
 const canvas = document.getElementById('scratchCanvas');
@@ -54,7 +54,7 @@ let isRevealed = false;
 // === 配置 ===
 // 在这里换上你们的合照路径和想说的话
 const PRIZE_CONFIG = {
-    image: '',  // 例如 '/assets/images/our-photo.jpg'
+    image: 'https://picsum.photos/seed/us1/400/400',  // 例如 '/assets/images/our-photo.jpg'
     message: '两周年快乐 ❤\n遇见你是我最幸运的事',
     coupon: '💌 此券可兑换一次专属约会\n由持券人指定时间 & 内容'
 };
