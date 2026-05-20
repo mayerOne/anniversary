@@ -68,9 +68,10 @@
         .password-input input {
             width: 46px; height: 56px; text-align: center; font-size: 24px;
             border: 2px solid rgba(201,169,110,0.25); border-radius: 14px;
-            outline: none; font-family: var(--font-serif); color: var(--text);
+            outline: none; font-family: var(--font-serif); color: var(--primary-glow);
             background: rgba(255,255,255,0.03); transition: all 0.3s;
             -webkit-appearance: none;
+            -webkit-text-security: disc;
         }
         .password-input input:focus {
             border-color: var(--primary);
@@ -192,14 +193,15 @@
         <h1>我们的故事</h1>
         <p class="hint">输入密码，打开回忆之门</p>
         <div class="password-input" id="passwordInput">
-            <input type="password" maxlength="1" inputmode="numeric" pattern="[0-9]" autofocus>
-            <input type="password" maxlength="1" inputmode="numeric" pattern="[0-9]">
-            <input type="password" maxlength="1" inputmode="numeric" pattern="[0-9]">
-            <input type="password" maxlength="1" inputmode="numeric" pattern="[0-9]">
-            <input type="password" maxlength="1" inputmode="numeric" pattern="[0-9]">
-            <input type="password" maxlength="1" inputmode="numeric" pattern="[0-9]">
+            <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" autofocus autocomplete="off">
+            <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" autocomplete="off">
+            <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" autocomplete="off">
+            <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" autocomplete="off">
+            <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" autocomplete="off">
+            <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" autocomplete="off">
         </div>
         <div class="password-error" id="passwordError"></div>
+        <button class="btn-enter" style="margin-top:16px;padding:10px 40px;font-size:14px;" id="passwordSubmit">确认 ✦</button>
     </div>
 </div>
 
@@ -282,6 +284,7 @@ inputs.forEach(function(input, idx) {
     });
 });
 
+document.getElementById('passwordSubmit').addEventListener('click', checkPassword);
 function checkPassword() {
     var pwd = Array.from(inputs).map(function(i) { return i.value; }).join('');
     if (pwd === CORRECT_PASSWORD) {
