@@ -3,58 +3,135 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>照片墙 - 我们的故事</title>
+    <title>照片墙 — 我们的故事</title>
     <link rel="stylesheet" href="../css/style.css">
+    <style>
+        .main { max-width: 1000px; }
+        body {
+            background: radial-gradient(ellipse at 50% 0%, #1a1a2e 0%, #0a0a0f 60%, #000 100%);
+        }
+
+        .full-lightbox {
+            position: fixed; inset: 0; z-index: 99999;
+            background: rgba(0,0,0,0.96);
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; visibility: hidden; transition: all 0.4s;
+        }
+        .full-lightbox.open { opacity: 1; visibility: visible; }
+        .full-lightbox img {
+            max-width: 92vw; max-height: 85vh; border-radius: 12px;
+            transform: scale(0.9); transition: transform 0.4s;
+        }
+        .full-lightbox.open img { transform: scale(1); }
+        .lightbox-close {
+            position: absolute; top: 24px; right: 36px; color: #fff;
+            font-size: 36px; cursor: pointer; opacity: 0.5; transition: opacity 0.2s;
+            z-index: 2;
+        }
+        .lightbox-close:hover { opacity: 1; }
+    </style>
 </head>
 <body>
 
 <div class="main">
-    <h1 class="page-title">照片墙</h1>
-    <p class="page-subtitle">用照片留住美好瞬间</p>
-    <div class="gallery-grid" id="gallery"></div>
+    <h1 class="page-title">记忆相册</h1>
+    <p class="page-subtitle">每一帧都是最美的时光</p>
+
+    <div class="carousel-container" id="carousel">
+        <div class="carousel-track" id="carouselTrack"></div>
+        <button class="carousel-btn prev" onclick="prevSlide()">&#10094;</button>
+        <button class="carousel-btn next" onclick="nextSlide()">&#10095;</button>
+        <div class="carousel-dots" id="carouselDots"></div>
+    </div>
 </div>
 
-<!-- Lightbox -->
-<div class="lightbox" id="lightbox">
+<!-- 灯箱 -->
+<div class="full-lightbox" id="lightbox" onclick="closeLightbox()">
     <span class="lightbox-close">&times;</span>
     <img id="lightboxImg" src="" alt="">
 </div>
 
 <script src="../js/main.js"></script>
 <script>
-const photos = [
-	    { src: 'https://picsum.photos/seed/love1/600/600', alt: '第一次约会' },
-	    { src: 'https://picsum.photos/seed/love2/600/600', alt: '看日落' },
-	    { src: 'https://picsum.photos/seed/love3/600/600', alt: '旅行' },
-	    { src: 'https://picsum.photos/seed/love4/600/600', alt: '情人节' },
-	    { src: 'https://picsum.photos/seed/love5/600/600', alt: '你的笑容' },
-	    { src: 'https://picsum.photos/seed/love6/600/600', alt: '一起做饭' },
-	    { src: 'https://picsum.photos/seed/love7/600/600', alt: '圣诞' },
-	    { src: 'https://picsum.photos/seed/love8/600/600', alt: '最好的我们' },
-	];
+var photos = [
+    { src: 'https://picsum.photos/seed/couple1/1200/800', title: '第一次约会', desc: '那天我们都紧张得说不出话' },
+    { src: 'https://picsum.photos/seed/couple2/1200/800', title: '一起看日落', desc: '海边的黄昏，我们靠在一起看了很久' },
+    { src: 'https://picsum.photos/seed/couple3/1200/800', title: '我们的旅行', desc: '每次出发都是新的冒险' },
+    { src: 'https://picsum.photos/seed/couple4/1200/800', title: '情人节', desc: '你送我花，我送你一颗心' },
+    { src: 'https://picsum.photos/seed/couple5/1200/800', title: '你的笑容', desc: '全世界最好看的风景就在我身边' },
+    { src: 'https://picsum.photos/seed/couple6/1200/800', title: '一起做饭', desc: '厨房里的烟火气，是最真实的幸福' },
+    { src: 'https://picsum.photos/seed/couple7/1200/800', title: '圣诞快乐', desc: '满街的彩灯都不及你眼里的光' },
+    { src: 'https://picsum.photos/seed/couple8/1200/800', title: '最好的我们', desc: '谢谢你出现在我的生命里' },
+];
 
-const gallery = document.getElementById('gallery');
-const lightbox = document.getElementById('lightbox');
-const lightboxImg = document.getElementById('lightboxImg');
+var currentSlide = 0;
+var track = document.getElementById('carouselTrack');
+var dotsContainer = document.getElementById('carouselDots');
+var autoplayTimer;
 
-if (photos.length === 0) {
-    gallery.innerHTML = '<p style="grid-column:1/-1;text-align:center;color:var(--text-light);padding:60px 0">照片整理中，敬请期待 💕</p>';
-} else {
-    photos.forEach(photo => {
-        const item = document.createElement('div');
-        item.className = 'gallery-item';
-        item.innerHTML = `<img src="${photo.src}" alt="${photo.alt}">`;
-        item.addEventListener('click', () => {
-            lightboxImg.src = photo.src;
-            lightbox.classList.add('open');
+function buildCarousel() {
+    track.innerHTML = photos.map(function(p, i) {
+        return '<div class="carousel-slide">' +
+            '<img src="' + p.src + '" alt="' + p.title + '" loading="lazy">' +
+            '<div class="overlay"><div class="slide-title">' + p.title + '</div>' +
+            '<div class="slide-desc">' + p.desc + '</div></div></div>';
+    }).join('');
+
+    dotsContainer.innerHTML = photos.map(function(_, i) {
+        return '<button class="carousel-dot' + (i === 0 ? ' active' : '') +
+            '" onclick="goToSlide(' + i + ')"></button>';
+    }).join('');
+
+    track.querySelectorAll('.carousel-slide img').forEach(function(img) {
+        img.addEventListener('click', function(e) {
+            e.stopPropagation();
+            openLightbox(img.src);
         });
-        gallery.appendChild(item);
     });
 }
 
-lightbox.addEventListener('click', () => {
-    lightbox.classList.remove('open');
+function goToSlide(n) {
+    currentSlide = (n + photos.length) % photos.length;
+    track.style.transform = 'translateX(-' + (currentSlide * 100) + '%)';
+    dotsContainer.querySelectorAll('.carousel-dot').forEach(function(d, i) {
+        d.classList.toggle('active', i === currentSlide);
+    });
+    resetAutoplay();
+}
+
+function nextSlide() { goToSlide(currentSlide + 1); }
+function prevSlide() { goToSlide(currentSlide - 1); }
+
+function resetAutoplay() {
+    clearInterval(autoplayTimer);
+    autoplayTimer = setInterval(nextSlide, 4000);
+}
+
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'ArrowRight') nextSlide();
+    if (e.key === 'ArrowLeft') prevSlide();
+    if (e.key === 'Escape') closeLightbox();
 });
+
+var touchStartX = 0;
+document.getElementById('carousel').addEventListener('touchstart', function(e) {
+    touchStartX = e.touches[0].clientX;
+});
+document.getElementById('carousel').addEventListener('touchend', function(e) {
+    var diff = e.changedTouches[0].clientX - touchStartX;
+    if (Math.abs(diff) > 50) { diff > 0 ? prevSlide() : nextSlide(); }
+});
+
+function openLightbox(src) {
+    document.getElementById('lightboxImg').src = src;
+    document.getElementById('lightbox').classList.add('open');
+}
+function closeLightbox() {
+    document.getElementById('lightbox').classList.remove('open');
+}
+
+buildCarousel();
+resetAutoplay();
 </script>
 </body>
 </html>

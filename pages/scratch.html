@@ -3,189 +3,224 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>刮刮乐 - 惊喜时刻 🎁</title>
+    <title>刮刮乐 — 九宫格惊喜</title>
     <link rel="stylesheet" href="../css/style.css">
     <style>
-        .main { max-width: 600px; }
-        .page-subtitle { margin-bottom: 32px; }
+        .main { max-width: 620px; }
+        body { background: radial-gradient(ellipse at 50% 0%, #1a1a2e 0%, #0a0a0f 60%, #000 100%); }
+        .scratch-grid {
+            display: grid; grid-template-columns: repeat(3, 1fr);
+            gap: 14px; max-width: 540px; margin: 0 auto;
+        }
+        .scratch-cell {
+            position: relative; aspect-ratio: 1; border-radius: 16px;
+            overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+            border: 1px solid var(--border);
+            transition: transform 0.3s;
+        }
+        .scratch-cell:hover { transform: translateY(-2px); }
+
+        .scratch-result {
+            position: absolute; inset: 0;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            padding: 12px; background: rgba(20,20,35,0.95);
+            z-index: 0; text-align: center;
+        }
+        .scratch-result .gift-icon { font-size: 36px; margin-bottom: 6px; }
+        .scratch-result .gift-text { font-size: 12px; color: var(--text-muted); line-height: 1.5; }
+        .scratch-result .gift-title { font-size: 14px; color: var(--primary-glow); margin-bottom: 4px; font-weight: 600; }
+
+        .scratch-canvas {
+            position: absolute; inset: 0; z-index: 1; width: 100%; height: 100%;
+            cursor: crosshair; transition: opacity 0.6s;
+        }
+
+        .scratch-controls { text-align: center; margin-top: 24px; }
+        .scratch-controls button {
+            padding: 10px 28px; border-radius: 50px; border: 1px solid var(--border);
+            background: rgba(201,169,110,0.1); color: var(--primary-glow);
+            font-size: 14px; cursor: pointer; transition: all 0.3s; letter-spacing: 1px;
+        }
+        .scratch-controls button:hover { background: rgba(201,169,110,0.2); }
+        .scratch-controls button:active { transform: scale(0.96); }
+
+        @media (max-width: 500px) {
+            .scratch-grid { gap: 8px; }
+            .scratch-result .gift-icon { font-size: 24px; }
+            .scratch-result .gift-text { font-size: 10px; }
+            .scratch-result .gift-title { font-size: 11px; }
+        }
     </style>
 </head>
 <body>
 
 <div class="main">
-    <h1 class="page-title">🎁 惊喜时刻</h1>
-    <p class="page-subtitle">刮开涂层，找到属于你的惊喜</p>
+    <h1 class="page-title">刮刮乐</h1>
+    <p class="page-subtitle">刮开每一格，发现九个不一样的惊喜 ✦</p>
 
-    <div class="scratch-container">
-        <div class="scratch-wrapper" id="scratchWrapper">
-            <!-- 底层结果 -->
-            <div class="scratch-result" id="scratchResult">
-                <img src="" alt="我们的照片" id="prizeImage">
-                <div class="message" id="prizeMessage">
-                    两周年快乐 ❤<br>
-                    遇见你是我最幸运的事
-                </div>
-                <div class="coupon" id="prizeCoupon">
-                    💌 此券可兑换一次专属约会<br>
-                    由持券人指定时间 & 内容
-                </div>
-            </div>
-            <!-- 涂层 Canvas -->
-            <canvas class="scratch-canvas" id="scratchCanvas"></canvas>
-        </div>
-        <div class="scratch-hint" id="scratchHint">👆 用手指刮开看看</div>
-        <button class="btn btn-primary" id="resetBtn" style="margin-top:20px;display:none" onclick="resetScratch()">再刮一次</button>
+    <div class="scratch-grid" id="scratchGrid"></div>
+    <div class="scratch-hint" id="globalHint" style="text-align:center;margin-top:16px;">👆 用手指轻轻刮开每一格</div>
+    <div class="scratch-controls">
+        <button onclick="resetAll()">重新来过 ✦</button>
     </div>
 </div>
 
 <script src="../js/main.js"></script>
 <script>
-const wrapper = document.getElementById('scratchWrapper');
-const canvas = document.getElementById('scratchCanvas');
-const ctx = canvas.getContext('2d');
-const hint = document.getElementById('scratchHint');
-const resetBtn = document.getElementById('resetBtn');
-const prizeImg = document.getElementById('prizeImage');
+var gifts = [
+    { icon: '💌', title: '情书一封', text: '你是我写不完的故事' },
+    { icon: '💐', title: '一束玫瑰', text: '每一朵都代表想你' },
+    { icon: '🍽️', title: '烛光晚餐', text: '我下厨，你享用' },
+    { icon: '✈️', title: '旅行基金', text: '下一站你想去哪里？' },
+    { icon: '🎬', title: '电影之夜', text: '陪你刷完所有想看的' },
+    { icon: '💆', title: '按摩券', text: '随叫随到，包你满意' },
+    { icon: '🎁', title: '神秘礼物', text: '拆开才知道是什么哦' },
+    { icon: '💤', title: '陪你赖床', text: '周末上午全都是你的' },
+    { icon: '💍', title: '最好的礼物', text: '我的余生，都给你' },
+];
 
-let isDrawing = false;
-let percentRevealed = 0;
-let isRevealed = false;
+var cells = [];
+var revealedCount = 0;
 
-// === 配置 ===
-// 在这里换上你们的合照路径和想说的话
-const PRIZE_CONFIG = {
-    image: 'https://picsum.photos/seed/us1/400/400',  // 例如 '/assets/images/our-photo.jpg'
-    message: '两周年快乐 ❤\n遇见你是我最幸运的事',
-    coupon: '💌 此券可兑换一次专属约会\n由持券人指定时间 & 内容'
-};
-
-// 如果有照片就显示，否则只显示文字
-if (PRIZE_CONFIG.image) {
-    prizeImg.src = PRIZE_CONFIG.image;
-    prizeImg.style.display = 'block';
-} else {
-    prizeImg.style.display = 'none';
-}
-document.getElementById('prizeMessage').innerHTML = PRIZE_CONFIG.message.replace(/\n/g, '<br>');
-document.getElementById('prizeCoupon').innerHTML = PRIZE_CONFIG.coupon.replace(/\n/g, '<br>');
-
-// === Canvas 初始化 ===
-function resizeCanvas() {
-    const rect = wrapper.getBoundingClientRect();
-    canvas.width = rect.width;
-    canvas.height = rect.height;
-    drawCoating();
+function buildGrid() {
+    var grid = document.getElementById('scratchGrid');
+    grid.innerHTML = '';
+    gifts.forEach(function(gift, idx) {
+        var cell = document.createElement('div');
+        cell.className = 'scratch-cell';
+        cell.innerHTML =
+            '<div class="scratch-result">' +
+            '<div class="gift-icon">' + gift.icon + '</div>' +
+            '<div class="gift-title">' + gift.title + '</div>' +
+            '<div class="gift-text">' + gift.text + '</div>' +
+            '</div>' +
+            '<canvas class="scratch-canvas" id="cv' + idx + '"></canvas>';
+        grid.appendChild(cell);
+    });
+    setTimeout(initCanvases, 300);
 }
 
-function drawCoating() {
-    // 灰色渐变涂层
-    const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
-    gradient.addColorStop(0, '#c0a0a0');
-    gradient.addColorStop(0.5, '#d0b0b0');
-    gradient.addColorStop(1, '#c0a0a0');
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+function initCanvases() {
+    cells = [];
+    for (var idx = 0; idx < 9; idx++) {
+        var canvas = document.getElementById('cv' + idx);
+        if (!canvas) continue;
+        var parent = canvas.parentElement;
+        var rect = parent.getBoundingClientRect();
+        canvas.width = rect.width;
+        canvas.height = rect.height;
+        var ctx = canvas.getContext('2d');
+        drawCoating(ctx, canvas.width, canvas.height);
+        cells.push({ canvas: canvas, ctx: ctx, revealed: false });
+        bindEvents(canvas, ctx, idx);
+    }
+}
 
-    // 涂层上的提示文字
-    ctx.fillStyle = 'rgba(255,255,255,0.8)';
-    ctx.font = `${Math.max(16, canvas.width * 0.05)}px Georgia, serif`;
+function drawCoating(ctx, w, h) {
+    var grad = ctx.createLinearGradient(0, 0, w, h);
+    grad.addColorStop(0, '#5a4a2f');
+    grad.addColorStop(0.5, '#8b7355');
+    grad.addColorStop(1, '#5a4a2f');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, w, h);
+    ctx.fillStyle = 'rgba(201,169,110,0.35)';
+    ctx.font = Math.max(11, w * 0.05) + 'px Georgia, serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText('✨ 刮开有惊喜 ✨', canvas.width / 2, canvas.height / 2);
-
-    ctx.font = `${Math.max(12, canvas.width * 0.035)}px sans-serif`;
-    ctx.fillStyle = 'rgba(255,255,255,0.5)';
-    ctx.fillText('用手指轻轻刮开', canvas.width / 2, canvas.height / 2 + 40);
+    ctx.fillText('✦ 刮开 ✦', w / 2, h / 2);
 }
 
-// === 刮涂层逻辑 ===
-function getPos(e) {
-    const rect = canvas.getBoundingClientRect();
-    const touch = e.touches ? e.touches[0] : e;
-    return {
-        x: (touch.clientX - rect.left) * (canvas.width / rect.width),
-        y: (touch.clientY - rect.top) * (canvas.height / rect.height)
-    };
-}
+function bindEvents(canvas, ctx, idx) {
+    var isDrawing = false;
 
-function scratch(x, y) {
-    if (isRevealed) return;
-    ctx.globalCompositeOperation = 'destination-out';
-    ctx.beginPath();
-    ctx.arc(x, y, Math.max(20, canvas.width * 0.06), 0, Math.PI * 2);
-    ctx.fill();
-    // 恢复默认
-    ctx.globalCompositeOperation = 'source-over';
-}
-
-function calcPercent() {
-    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    const pixels = imageData.data;
-    let transparent = 0;
-    for (let i = 3; i < pixels.length; i += 4) {
-        if (pixels[i] === 0) transparent++;
+    function getPos(e) {
+        var r = canvas.getBoundingClientRect();
+        var t = e.touches ? e.touches[0] : e;
+        return {
+            x: (t.clientX - r.left) * (canvas.width / r.width),
+            y: (t.clientY - r.top) * (canvas.height / r.height)
+        };
     }
-    return (transparent / (pixels.length / 4)) * 100;
+
+    function scratch(x, y) {
+        if (cells[idx] && cells[idx].revealed) return;
+        ctx.globalCompositeOperation = 'destination-out';
+        ctx.beginPath();
+        ctx.arc(x, y, Math.max(16, canvas.width * 0.07), 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalCompositeOperation = 'source-over';
+    }
+
+    function calcPercent() {
+        var d = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+        var t = 0;
+        for (var i = 3; i < d.length; i += 4) { if (d[i] === 0) t++; }
+        return (t / (d.length / 4)) * 100;
+    }
+
+    canvas.addEventListener('mousedown', function(e) {
+        if (cells[idx] && cells[idx].revealed) return;
+        isDrawing = true;
+        var p = getPos(e);
+        scratch(p.x, p.y);
+    });
+    canvas.addEventListener('mousemove', function(e) {
+        if (!isDrawing || (cells[idx] && cells[idx].revealed)) return;
+        var p = getPos(e);
+        scratch(p.x, p.y);
+        if (calcPercent() > 40) revealCell(idx);
+    });
+    canvas.addEventListener('mouseup', function() { isDrawing = false; });
+    canvas.addEventListener('mouseleave', function() { isDrawing = false; });
+    canvas.addEventListener('touchstart', function(e) {
+        if (cells[idx] && cells[idx].revealed) return;
+        e.preventDefault();
+        isDrawing = true;
+        var p = getPos(e);
+        scratch(p.x, p.y);
+    }, { passive: false });
+    canvas.addEventListener('touchmove', function(e) {
+        if (!isDrawing || (cells[idx] && cells[idx].revealed)) return;
+        e.preventDefault();
+        var p = getPos(e);
+        scratch(p.x, p.y);
+        if (calcPercent() > 40) revealCell(idx);
+    }, { passive: false });
+    canvas.addEventListener('touchend', function() { isDrawing = false; });
 }
 
-function checkReveal() {
-    if (isRevealed) return;
-    percentRevealed = calcPercent();
-    if (percentRevealed > 50) {
-        isRevealed = true;
-        canvas.style.display = 'none';
-        hint.textContent = '🎉 恭喜你发现了惊喜！';
-        resetBtn.style.display = 'inline-block';
+function revealCell(idx) {
+    if (!cells[idx] || cells[idx].revealed) return;
+    cells[idx].revealed = true;
+    cells[idx].canvas.style.opacity = '0';
+    revealedCount++;
+    if (revealedCount === 9) {
+        document.getElementById('globalHint').textContent = '🎉 所有惊喜都揭开了！感谢你走进我的世界 ✦';
+    } else {
+        document.getElementById('globalHint').textContent = '已揭开 ' + revealedCount + '/9 个惊喜 ✦ 继续刮吧';
     }
 }
 
-// === 事件监听 ===
-canvas.addEventListener('mousedown', (e) => {
-    isDrawing = true;
-    const pos = getPos(e);
-    scratch(pos.x, pos.y);
-});
-
-canvas.addEventListener('mousemove', (e) => {
-    if (!isDrawing) return;
-    const pos = getPos(e);
-    scratch(pos.x, pos.y);
-    checkReveal();
-});
-
-canvas.addEventListener('mouseup', () => { isDrawing = false; });
-canvas.addEventListener('mouseleave', () => { isDrawing = false; });
-
-canvas.addEventListener('touchstart', (e) => {
-    e.preventDefault();
-    isDrawing = true;
-    const pos = getPos(e);
-    scratch(pos.x, pos.y);
-}, { passive: false });
-
-canvas.addEventListener('touchmove', (e) => {
-    e.preventDefault();
-    if (!isDrawing) return;
-    const pos = getPos(e);
-    scratch(pos.x, pos.y);
-    checkReveal();
-}, { passive: false });
-
-canvas.addEventListener('touchend', () => { isDrawing = false; });
-
-// === 重置 ===
-function resetScratch() {
-    isRevealed = false;
-    canvas.style.display = 'block';
-    hint.textContent = '👆 用手指刮开看看';
-    resetBtn.style.display = 'none';
-    drawCoating();
+function resetAll() {
+    revealedCount = 0;
+    document.getElementById('globalHint').textContent = '👆 用手指轻轻刮开每一格';
+    for (var i = 0; i < cells.length; i++) {
+        if (cells[i]) {
+            cells[i].revealed = false;
+            cells[i].canvas.style.opacity = '1';
+            drawCoating(cells[i].ctx, cells[i].canvas.width, cells[i].canvas.height);
+        }
+    }
 }
 
-// === 初始化 ===
-window.addEventListener('resize', resizeCanvas);
-// 等待布局稳定后初始化
-setTimeout(resizeCanvas, 100);
+buildGrid();
+
+var resizeTimeout;
+window.addEventListener('resize', function() {
+    clearTimeout(resizeTimeout);
+    resizeTimeout = setTimeout(initCanvases, 400);
+});
 </script>
 </body>
 </html>

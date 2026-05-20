@@ -3,55 +3,151 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>足迹 - 我们的故事</title>
+    <title>我们的足迹 — 中国地图</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="../css/style.css">
     <style>
-        .main { max-width: 1000px; }
+        .main { max-width: 1100px; }
+        body { background: radial-gradient(ellipse at 50% 0%, #1a1a2e 0%, #0a0a0f 60%, #000 100%); }
+        #map { height: 620px; }
+        .map-popup { padding: 8px; max-width: 320px; }
+        .map-popup strong { font-size: 16px; display: block; margin-bottom: 4px; }
+        .map-popup .desc-text { font-size: 13px; color: var(--text-muted); margin-bottom: 10px; }
+        .map-popup .popup-photos { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 4px; }
+        .map-popup .popup-photos img {
+            width: 90px; height: 60px; object-fit: cover; border-radius: 6px;
+            cursor: pointer; transition: transform 0.2s, border-color 0.2s;
+            border: 2px solid transparent;
+        }
+        .map-popup .popup-photos img:hover { transform: scale(1.04); border-color: var(--primary); }
+
+        .map-legend {
+            display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; margin-top: 24px;
+        }
+        .legend-item {
+            display: flex; align-items: center; gap: 6px; font-size: 13px;
+            color: var(--text-muted); cursor: pointer; transition: color 0.2s;
+        }
+        .legend-item:hover { color: var(--primary-glow); }
+        .legend-dot {
+            width: 10px; height: 10px; border-radius: 50%;
+            background: var(--primary-glow); box-shadow: 0 0 8px rgba(201,169,110,0.5);
+        }
+
+        .full-lightbox {
+            position: fixed; inset: 0; z-index: 99999;
+            background: rgba(0,0,0,0.96);
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; visibility: hidden; transition: all 0.4s;
+        }
+        .full-lightbox.open { opacity: 1; visibility: visible; }
+        .full-lightbox img {
+            max-width: 92vw; max-height: 85vh; border-radius: 12px;
+            transform: scale(0.9); transition: transform 0.4s;
+        }
+        .full-lightbox.open img { transform: scale(1); }
+        .lightbox-close {
+            position: absolute; top: 24px; right: 36px; color: #fff;
+            font-size: 36px; cursor: pointer; opacity: 0.5; z-index: 2;
+        }
+        .lightbox-close:hover { opacity: 1; }
     </style>
 </head>
 <body>
 
 <div class="main">
     <h1 class="page-title">我们的足迹</h1>
-    <p class="page-subtitle">一起去过的每一个地方</p>
+    <p class="page-subtitle">标记的每个地方，都有我们的故事</p>
     <div id="map"></div>
+    <div class="map-legend" id="legend"></div>
+</div>
+
+<div class="full-lightbox" id="lightbox" onclick="closeLightbox()">
+    <span class="lightbox-close">&times;</span>
+    <img id="lightboxImg" src="" alt="">
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="../js/main.js"></script>
 <script>
-loadJSON('/data/map.json').then(places => {
-    const map = L.map('map').setView(
-        places.length > 0 ? [places[0].lat, places[0].lng] : [35, 110],
-        places.length > 1 ? 5 : 12
-    );
-
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap',
-        maxZoom: 18
-    }).addTo(map);
-
-    if (places.length === 0) {
-        // Show a default view of China
-        map.setView([32, 110], 4);
+var places = [
+    {
+        lat: 22.5431, lng: 114.0579, title: '深圳',
+        desc: '我们相遇相爱的城市，是一切开始的地方。',
+        photos: ['https://picsum.photos/seed/sz1/400/300', 'https://picsum.photos/seed/sz2/400/300']
+    },
+    {
+        lat: 23.1291, lng: 113.2644, title: '广州',
+        desc: '肠粉早茶西关老巷，你说这里是美食天堂。',
+        photos: ['https://picsum.photos/seed/gz1/400/300', 'https://picsum.photos/seed/gz2/400/300']
+    },
+    {
+        lat: 30.5728, lng: 104.0668, title: '成都',
+        desc: '宽窄巷子喝茶，锦里逛街，辣到流眼泪也开心。',
+        photos: ['https://picsum.photos/seed/cd1/400/300', 'https://picsum.photos/seed/cd2/400/300']
+    },
+    {
+        lat: 39.9042, lng: 116.4074, title: '北京',
+        desc: '故宫里走了一天，你说穿越回去想当皇后。',
+        photos: ['https://picsum.photos/seed/bj1/400/300', 'https://picsum.photos/seed/bj2/400/300']
+    },
+    {
+        lat: 31.2304, lng: 121.4737, title: '上海',
+        desc: '外滩夜景，南京路漫步，你说这城市太魔幻了。',
+        photos: ['https://picsum.photos/seed/sh1/400/300', 'https://picsum.photos/seed/sh2/400/300']
+    },
+    {
+        lat: 25.0389, lng: 102.7183, title: '昆明',
+        desc: '四季如春的城市，我们在滇池边喂海鸥。',
+        photos: ['https://picsum.photos/seed/km1/400/300', 'https://picsum.photos/seed/km2/400/300']
     }
+];
 
-    places.forEach(place => {
-        const popupContent = `
-            <div class="map-popup">
-                <strong>${place.title}</strong>
-                ${place.image ? `<br><img src="${place.image}" alt="${place.title}">` : ''}
-                <p>${place.desc}</p>
-            </div>
-        `;
-        L.marker([place.lat, place.lng])
-            .addTo(map)
-            .bindPopup(popupContent);
+var map = L.map('map', { zoomControl: false }).setView([32.5, 110], 5);
+
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    attribution: '&copy; OpenStreetMap & CartoDB', maxZoom: 18
+}).addTo(map);
+
+L.control.zoom({ position: 'topright' }).addTo(map);
+
+var goldIcon = L.divIcon({
+    className: '', html: '<div style="width:14px;height:14px;border-radius:50%;background:#c9a96e;border:2px solid #fff;box-shadow:0 0 16px rgba(201,169,110,0.8);"></div>',
+    iconSize: [14, 14], iconAnchor: [7, 7]
+});
+
+var legendContainer = document.getElementById('legend');
+
+places.forEach(function(place, idx) {
+    var photosHtml = place.photos.map(function(p) {
+        return '<img src="' + p + '" alt="" onclick="openLightbox(\'' + p + '\')" loading="lazy">';
+    }).join('');
+
+    var marker = L.marker([place.lat, place.lng], { icon: goldIcon }).addTo(map)
+        .bindPopup('<div class="map-popup"><strong>✦ ' + place.title + '</strong>' +
+            '<p class="desc-text">' + place.desc + '</p>' +
+            '<div class="popup-photos">' + photosHtml + '</div></div>', { maxWidth: 340 });
+
+    var legendItem = document.createElement('div');
+    legendItem.className = 'legend-item';
+    legendItem.innerHTML = '<span class="legend-dot"></span>' + place.title;
+    legendItem.addEventListener('click', function() {
+        map.setView([place.lat, place.lng], 12);
+        marker.openPopup();
     });
-}).catch(() => {
-    document.getElementById('map').innerHTML =
-        '<p style="text-align:center;padding:100px 0;color:var(--text-light)">足迹加载中...</p>';
+    legendContainer.appendChild(legendItem);
+});
+
+function openLightbox(src) {
+    var lb = document.getElementById('lightbox');
+    document.getElementById('lightboxImg').src = src;
+    lb.classList.add('open');
+}
+function closeLightbox() {
+    document.getElementById('lightbox').classList.remove('open');
+}
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeLightbox();
 });
 </script>
 </body>
