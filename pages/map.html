@@ -56,6 +56,19 @@
             0% { transform: scale(0.8); opacity: 0.7; }
             100% { transform: scale(2.2); opacity: 0; }
         }
+
+        /* 永久展开的 tooltip 样式 */
+        .map-permanent-tooltip {
+            background: rgba(20,20,35,0.95) !important;
+            border: 1px solid rgba(201,169,110,0.3) !important;
+            border-radius: 12px !important;
+            padding: 0 !important;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5) !important;
+            color: var(--text) !important;
+        }
+        .map-permanent-tooltip::before {
+            border-top-color: rgba(201,169,110,0.3) !important;
+        }
     </style>
 </head>
 <body>
@@ -153,9 +166,11 @@ loadLeaflet(function() {
         }).join('');
 
         var marker = L.marker([place.lat, place.lng], { icon: goldIcon }).addTo(map)
-            .bindPopup('<div class="map-popup"><strong>✦ ' + place.title + '</strong>' +
+            .bindTooltip('<div class="map-popup"><strong>✦ ' + place.title + '</strong>' +
                 '<p class="desc-text">' + place.desc + '</p>' +
-                '<div class="popup-photos">' + photosHtml + '</div></div>', { maxWidth: 340 });
+                '<div class="popup-photos">' + photosHtml + '</div></div>', {
+                permanent: true, direction: 'auto', className: 'map-permanent-tooltip'
+            });
         markers.push(marker);
 
         var legendItem = document.createElement('div');
@@ -164,16 +179,12 @@ loadLeaflet(function() {
         (function(place, marker) {
             legendItem.addEventListener('click', function() {
                 map.setView([place.lat, place.lng], 12);
-                marker.openPopup();
             });
         })(place, marker);
         legendContainer.appendChild(legendItem);
     });
 
-    // 默认展开所有城市弹窗，展示图片
-    setTimeout(function() {
-        markers.forEach(function(m) { m.openPopup(); });
-    }, 500);
+    // 所有城市 tooltip 已通过 permanent: true 默认展开
 });
 
 function openLightbox(src) {
