@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>我们的足迹 — 中国地图</title>
-    <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+    <link rel="stylesheet" href="https://lib.baomitu.com/leaflet/1.9.4/leaflet.min.css" />
     <link rel="stylesheet" href="../css/style.css">
     <style>
         .main { max-width: 1100px; }
@@ -67,75 +67,98 @@
     <img id="lightboxImg" src="" alt="">
 </div>
 
-<script src="https://cdn.bootcdn.net/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
-<script src="../js/main.js"></script>
 <script>
-var places = [
-    {
-        lat: 22.5431, lng: 114.0579, title: '深圳',
-        desc: '我们相遇相爱的城市，是一切开始的地方。',
-        photos: ['https://picsum.photos/seed/sz1/400/300', 'https://picsum.photos/seed/sz2/400/300']
-    },
-    {
-        lat: 23.1291, lng: 113.2644, title: '广州',
-        desc: '肠粉早茶西关老巷，你说这里是美食天堂。',
-        photos: ['https://picsum.photos/seed/gz1/400/300', 'https://picsum.photos/seed/gz2/400/300']
-    },
-    {
-        lat: 30.5728, lng: 104.0668, title: '成都',
-        desc: '宽窄巷子喝茶，锦里逛街，辣到流眼泪也开心。',
-        photos: ['https://picsum.photos/seed/cd1/400/300', 'https://picsum.photos/seed/cd2/400/300']
-    },
-    {
-        lat: 39.9042, lng: 116.4074, title: '北京',
-        desc: '故宫里走了一天，你说穿越回去想当皇后。',
-        photos: ['https://picsum.photos/seed/bj1/400/300', 'https://picsum.photos/seed/bj2/400/300']
-    },
-    {
-        lat: 31.2304, lng: 121.4737, title: '上海',
-        desc: '外滩夜景，南京路漫步，你说这城市太魔幻了。',
-        photos: ['https://picsum.photos/seed/sh1/400/300', 'https://picsum.photos/seed/sh2/400/300']
-    },
-    {
-        lat: 25.0389, lng: 102.7183, title: '昆明',
-        desc: '四季如春的城市，我们在滇池边喂海鸥。',
-        photos: ['https://picsum.photos/seed/km1/400/300', 'https://picsum.photos/seed/km2/400/300']
+// Leaflet CDN fallback
+function loadLeaflet(cb) {
+    var urls = [
+        'https://lib.baomitu.com/leaflet/1.9.4/leaflet.min.js',
+        'https://cdn.bootcdn.net/ajax/libs/leaflet/1.9.4/leaflet.min.js',
+        'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js'
+    ];
+    function tryLoad(i) {
+        if (i >= urls.length) { console.error('Leaflet failed to load from all CDNs'); return; }
+        var s = document.createElement('script');
+        s.src = urls[i];
+        s.onload = cb;
+        s.onerror = function() { tryLoad(i + 1); };
+        document.head.appendChild(s);
     }
-];
+    tryLoad(0);
+}
 
-var map = L.map('map', { zoomControl: false }).setView([32.5, 110], 5);
+loadLeaflet(function() {
+    var places = [
+        {
+            lat: 22.5431, lng: 114.0579, title: '深圳',
+            desc: '我们相遇相爱的城市，是一切开始的地方。',
+            photos: ['https://picsum.photos/seed/sz1/400/300', 'https://picsum.photos/seed/sz2/400/300']
+        },
+        {
+            lat: 23.1291, lng: 113.2644, title: '广州',
+            desc: '肠粉早茶西关老巷，你说这里是美食天堂。',
+            photos: ['https://picsum.photos/seed/gz1/400/300', 'https://picsum.photos/seed/gz2/400/300']
+        },
+        {
+            lat: 30.5728, lng: 104.0668, title: '成都',
+            desc: '宽窄巷子喝茶，锦里逛街，辣到流眼泪也开心。',
+            photos: ['https://picsum.photos/seed/cd1/400/300', 'https://picsum.photos/seed/cd2/400/300']
+        },
+        {
+            lat: 39.9042, lng: 116.4074, title: '北京',
+            desc: '故宫里走了一天，你说穿越回去想当皇后。',
+            photos: ['https://picsum.photos/seed/bj1/400/300', 'https://picsum.photos/seed/bj2/400/300']
+        },
+        {
+            lat: 31.2304, lng: 121.4737, title: '上海',
+            desc: '外滩夜景，南京路漫步，你说这城市太魔幻了。',
+            photos: ['https://picsum.photos/seed/sh1/400/300', 'https://picsum.photos/seed/sh2/400/300']
+        },
+        {
+            lat: 25.0389, lng: 102.7183, title: '昆明',
+            desc: '四季如春的城市，我们在滇池边喂海鸥。',
+            photos: ['https://picsum.photos/seed/km1/400/300', 'https://picsum.photos/seed/km2/400/300']
+        }
+    ];
 
-L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-    attribution: '&copy; OpenStreetMap & CartoDB', maxZoom: 18
-}).addTo(map);
+    var map = L.map('map', { zoomControl: false }).setView([32.5, 110], 5);
 
-L.control.zoom({ position: 'topright' }).addTo(map);
+    // OpenStreetMap tiles (more accessible than CartoDB)
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors',
+        maxZoom: 18
+    }).addTo(map);
 
-var goldIcon = L.divIcon({
-    className: '', html: '<div style="width:14px;height:14px;border-radius:50%;background:#c9a96e;border:2px solid #fff;box-shadow:0 0 16px rgba(201,169,110,0.8);"></div>',
-    iconSize: [14, 14], iconAnchor: [7, 7]
-});
+    L.control.zoom({ position: 'topright' }).addTo(map);
 
-var legendContainer = document.getElementById('legend');
-
-places.forEach(function(place, idx) {
-    var photosHtml = place.photos.map(function(p) {
-        return '<img src="' + p + '" alt="" onclick="openLightbox(\'' + p + '\')" loading="lazy">';
-    }).join('');
-
-    var marker = L.marker([place.lat, place.lng], { icon: goldIcon }).addTo(map)
-        .bindPopup('<div class="map-popup"><strong>✦ ' + place.title + '</strong>' +
-            '<p class="desc-text">' + place.desc + '</p>' +
-            '<div class="popup-photos">' + photosHtml + '</div></div>', { maxWidth: 340 });
-
-    var legendItem = document.createElement('div');
-    legendItem.className = 'legend-item';
-    legendItem.innerHTML = '<span class="legend-dot"></span>' + place.title;
-    legendItem.addEventListener('click', function() {
-        map.setView([place.lat, place.lng], 12);
-        marker.openPopup();
+    var goldIcon = L.divIcon({
+        className: '',
+        html: '<div style="width:14px;height:14px;border-radius:50%;background:#c9a96e;border:2px solid #fff;box-shadow:0 0 16px rgba(201,169,110,0.8);"></div>',
+        iconSize: [14, 14], iconAnchor: [7, 7]
     });
-    legendContainer.appendChild(legendItem);
+
+    var legendContainer = document.getElementById('legend');
+
+    places.forEach(function(place) {
+        var photosHtml = place.photos.map(function(p) {
+            return '<img src="' + p + '" alt="" onclick="openLightbox(\'' + p + '\')" loading="lazy">';
+        }).join('');
+
+        var marker = L.marker([place.lat, place.lng], { icon: goldIcon }).addTo(map)
+            .bindPopup('<div class="map-popup"><strong>✦ ' + place.title + '</strong>' +
+                '<p class="desc-text">' + place.desc + '</p>' +
+                '<div class="popup-photos">' + photosHtml + '</div></div>', { maxWidth: 340 });
+
+        var legendItem = document.createElement('div');
+        legendItem.className = 'legend-item';
+        legendItem.innerHTML = '<span class="legend-dot"></span>' + place.title;
+        (function(place, marker) {
+            legendItem.addEventListener('click', function() {
+                map.setView([place.lat, place.lng], 12);
+                marker.openPopup();
+            });
+        })(place, marker);
+        legendContainer.appendChild(legendItem);
+    });
 });
 
 function openLightbox(src) {
@@ -150,5 +173,6 @@ document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') closeLightbox();
 });
 </script>
+<script src="../js/main.js"></script>
 </body>
 </html>
