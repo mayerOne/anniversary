@@ -16,7 +16,7 @@
 
 <script src="../js/main.js"></script>
 <script>
-loadJSON('/data/letters.json').then(data => {
+loadJSON('../data/letters.json').then(data => {
     const container = document.getElementById('letters');
     if (data.length === 0) {
         container.innerHTML = '<p style="text-align:center;color:var(--text-light);padding:60px 0">正在酝酿中... 💌</p>';
