@@ -145,6 +145,7 @@ loadLeaflet(function() {
     });
 
     var legendContainer = document.getElementById('legend');
+    var markers = [];
 
     places.forEach(function(place) {
         var photosHtml = place.photos.map(function(p) {
@@ -155,6 +156,7 @@ loadLeaflet(function() {
             .bindPopup('<div class="map-popup"><strong>✦ ' + place.title + '</strong>' +
                 '<p class="desc-text">' + place.desc + '</p>' +
                 '<div class="popup-photos">' + photosHtml + '</div></div>', { maxWidth: 340 });
+        markers.push(marker);
 
         var legendItem = document.createElement('div');
         legendItem.className = 'legend-item';
@@ -167,6 +169,12 @@ loadLeaflet(function() {
         })(place, marker);
         legendContainer.appendChild(legendItem);
     });
+
+    // 默认展开第一个城市弹窗，展示图片
+    if (markers.length > 0) {
+        map.setView([places[0].lat, places[0].lng], 7);
+        setTimeout(function() { markers[0].openPopup(); }, 500);
+    }
 });
 
 function openLightbox(src) {
