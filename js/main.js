@@ -74,11 +74,38 @@ function initNav(title) {
 
 // === 音乐播放器（陈奕迅 - 红玫瑰） ===
 function initMusic() {
-    if (document.querySelector('.music-player')) return;
-    var container = document.createElement('div');
-    container.className = 'music-player';
-    container.innerHTML = '<iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width="100%" height="52" src="https://music.163.com/outchain/player?type=2&id=65538&auto=0&height=32"></iframe>';
-    document.body.appendChild(container);
+    if (document.querySelector('.music-btn')) return;
+    var btn = document.createElement('button');
+    btn.className = 'music-btn';
+    btn.textContent = '♪';
+    btn.title = '播放 - 陈奕迅 · 红玫瑰';
+    document.body.appendChild(btn);
+
+    var audio = null;
+    var playing = false;
+
+    btn.addEventListener('click', function() {
+        if (!audio) {
+            // 首次点击时创建 Audio，利用用户手势触发播放
+            audio = new Audio();
+            audio.src = 'https://music.163.com/song/media/outer/url?id=65538.mp3';
+            audio.loop = true;
+            audio.volume = 0.6;
+        }
+        if (playing) {
+            audio.pause();
+            btn.classList.remove('playing');
+            btn.title = '播放 - 陈奕迅 · 红玫瑰';
+        } else {
+            audio.play().then(function() {
+                btn.classList.add('playing');
+                btn.title = '暂停 - 陈奕迅 · 红玫瑰';
+            }).catch(function(err) {
+                console.log('Music play failed:', err.message);
+            });
+        }
+        playing = !playing;
+    });
 }
 
 // === 页面初始化 ===

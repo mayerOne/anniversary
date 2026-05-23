@@ -236,14 +236,16 @@ img { max-width: 100%; border-radius: 12px; }
 }
 
 /* === 音乐 === */
-.music-player {
-    position: fixed; bottom: 16px; right: 16px; z-index: 100;
-    width: 300px; border-radius: 12px; overflow: hidden;
-    box-shadow: 0 4px 24px rgba(0,0,0,0.5); opacity: 0.85;
-    transition: opacity 0.3s;
+.music-btn {
+    position: fixed; bottom: 24px; right: 24px; z-index: 100;
+    width: 48px; height: 48px; border-radius: 50%; border: 1px solid var(--border);
+    background: var(--bg-card); box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+    cursor: pointer; font-size: 20px; display: flex; align-items: center;
+    justify-content: center; transition: all 0.3s; color: var(--primary-glow);
+    backdrop-filter: blur(8px);
 }
-.music-player:hover { opacity: 1; }
-.music-player iframe { display: block; }
+.music-btn:hover { transform: scale(1.1); box-shadow: 0 6px 24px rgba(0,0,0,0.4); }
+.music-btn.playing { animation: spin 4s linear infinite; border-color: var(--primary); }
 
 /* === 动画 === */
 @keyframes fadeInUp {
@@ -269,6 +271,6 @@ img { max-width: 100%; border-radius: 12px; }
     .letter-card { padding: 28px 20px; }
     .timeline { padding-left: 36px; }
     .scratch-grid { gap: 8px; }
-    .music-player { bottom: 8px; right: 8px; width: 260px; }
+    .music-btn { bottom: 16px; right: 16px; width: 42px; height: 42px; font-size: 18px; }
     #map { height: 400px; }
 }
