@@ -106,18 +106,18 @@ function loadLeaflet(cb) {
 
 loadLeaflet(function() {
     var places = [
-        { lat: 22.5431, lng: 114.0579, title: '深圳',   desc: '我们相遇相爱的城市，是一切开始的地方。',  folder: '../images/map/shenzhen' },
-        { lat: 31.2304, lng: 121.4737, title: '上海',   desc: '外滩夜景，南京路漫步，你说这城市太魔幻了。', folder: '../images/map/shanghai' },
-        { lat: 30.2741, lng: 120.1551, title: '杭州',   desc: '西湖断桥残雪，雷峰塔下我们许了愿。',      folder: '../images/map/hangzhou' },
-        { lat: 31.2990, lng: 120.5853, title: '苏州',   desc: '拙政园里听评弹，平江路上牵手漫步。',      folder: '../images/map/suzhou' },
-        { lat: 23.1291, lng: 113.2644, title: '广州',   desc: '肠粉早茶西关老巷，你说这里是美食天堂。',  folder: '../images/map/guangzhou' },
-        { lat: 29.4316, lng: 106.9123, title: '重庆',   desc: '洪崖洞的夜景像千与千寻，火锅辣到流眼泪。', folder: '../images/map/chongqing' },
-        { lat: 28.6820, lng: 115.8581, title: '南昌',   desc: '滕王阁上望赣江，英雄城里走一走。',        folder: '../images/map/nanchang' },
-        { lat: 27.6228, lng: 113.8545, title: '萍乡',   desc: '萍水相逢，却是此生最美的意外。',          folder: '../images/map/pingxiang' },
-        { lat: 26.8932, lng: 112.5720, title: '衡阳',   desc: '衡山脚下，你说要一起看遍世间风景。',      folder: '../images/map/hengyang' },
-        { lat: 28.2282, lng: 112.9388, title: '长沙',   desc: '橘子洲头烟花绚烂，茶颜悦色一人一杯。',    folder: '../images/map/changsha' },
-        { lat: 26.0745, lng: 119.2965, title: '福州',   desc: '三坊七巷走九遍，鱼丸肉燕吃不够。',        folder: '../images/map/fuzhou' },
-        { lat: 25.5037, lng: 119.7891, title: '平潭岛', desc: '蓝眼泪划过海岸，像极了爱情的模样。',      folder: '../images/map/pingtan' }
+        { lat: 22.5431, lng: 114.0579, title: '深圳', slug: 'shenzhen',   desc: '我们相遇相爱的城市，是一切开始的地方。' },
+        { lat: 31.2304, lng: 121.4737, title: '上海', slug: 'shanghai',   desc: '外滩夜景，南京路漫步，你说这城市太魔幻了。' },
+        { lat: 30.2741, lng: 120.1551, title: '杭州', slug: 'hangzhou',   desc: '西湖断桥残雪，雷峰塔下我们许了愿。' },
+        { lat: 31.2990, lng: 120.5853, title: '苏州', slug: 'suzhou',     desc: '拙政园里听评弹，平江路上牵手漫步。' },
+        { lat: 23.1291, lng: 113.2644, title: '广州', slug: 'guangzhou',  desc: '肠粉早茶西关老巷，你说这里是美食天堂。' },
+        { lat: 29.4316, lng: 106.9123, title: '重庆', slug: 'chongqing',  desc: '洪崖洞的夜景像千与千寻，火锅辣到流眼泪。' },
+        { lat: 28.6820, lng: 115.8581, title: '南昌', slug: 'nanchang',   desc: '滕王阁上望赣江，英雄城里走一走。' },
+        { lat: 27.6228, lng: 113.8545, title: '萍乡', slug: 'pingxiang',  desc: '萍水相逢，却是此生最美的意外。' },
+        { lat: 26.8932, lng: 112.5720, title: '衡阳', slug: 'hengyang',   desc: '衡山脚下，你说要一起看遍世间风景。' },
+        { lat: 28.2282, lng: 112.9388, title: '长沙', slug: 'changsha',   desc: '橘子洲头烟花绚烂，茶颜悦色一人一杯。' },
+        { lat: 26.0745, lng: 119.2965, title: '福州', slug: 'fuzhou',     desc: '三坊七巷走九遍，鱼丸肉燕吃不够。' },
+        { lat: 25.5037, lng: 119.7891, title: '平潭岛', slug: 'pingtan',  desc: '蓝眼泪划过海岸，像极了爱情的模样。' }
     ];
 
     var map = L.map('map', { zoomControl: false }).setView([27.5, 113.5], 6);
@@ -142,35 +142,33 @@ loadLeaflet(function() {
     var legendContainer = document.getElementById('legend');
     var markers = [];
 
-    places.forEach(function(place) {
-        // 自动加载目录下所有 1.jpg, 2.jpg, 3.jpg... (最多20张)
-        var photosHtml = '';
-        for (var i = 1; i <= 20; i++) {
-            var src = place.folder + '/' + i + '.jpg';
-            photosHtml += '<img src="' + src + '" alt="" onclick="openLightbox(\'' + src + '\')" loading="lazy" onerror="this.style.display=\'none\'">';
-        }
+    fetch('../data/map.json').then(function(r) { return r.json(); }).then(function(mapData) {
+        places.forEach(function(place) {
+            var photos = mapData[place.slug] || [];
+            var photosHtml = photos.map(function(f) {
+                var src = '../images/map/' + place.slug + '/' + f;
+                return '<img src="' + src + '" alt="" onclick="openLightbox(\'' + src + '\')" loading="lazy" onerror="this.style.display=\'none\'">';
+            }).join('');
 
-        var marker = L.marker([place.lat, place.lng], { icon: goldIcon }).addTo(map)
-            .bindTooltip('<div class="map-popup"><strong>✦ ' + place.title + '</strong>' +
-                '<p class="desc-text">' + place.desc + '</p>' +
-                '<div class="popup-photos">' + photosHtml + '</div></div>', {
-                permanent: true, direction: 'auto', className: 'map-permanent-tooltip'
-            });
-        markers.push(marker);
+            var marker = L.marker([place.lat, place.lng], { icon: goldIcon }).addTo(map)
+                .bindTooltip('<div class="map-popup"><strong>✦ ' + place.title + '</strong>' +
+                    '<p class="desc-text">' + place.desc + '</p>' +
+                    '<div class="popup-photos">' + photosHtml + '</div></div>', {
+                    permanent: true, direction: 'auto', className: 'map-permanent-tooltip'
+                });
+            markers.push(marker);
 
-        var legendItem = document.createElement('div');
-        legendItem.className = 'legend-item';
-        legendItem.innerHTML = '<span class="legend-dot"></span>' + place.title;
-        (function(place, marker) {
-            legendItem.addEventListener('click', function() {
-                map.setView([place.lat, place.lng], 12);
-            });
-        })(place, marker);
-        legendContainer.appendChild(legendItem);
+            var legendItem = document.createElement('div');
+            legendItem.className = 'legend-item';
+            legendItem.innerHTML = '<span class="legend-dot"></span>' + place.title;
+            (function(place, marker) {
+                legendItem.addEventListener('click', function() {
+                    map.setView([place.lat, place.lng], 12);
+                });
+            })(place, marker);
+            legendContainer.appendChild(legendItem);
+        });
     });
-
-    // 所有城市 tooltip 已通过 permanent: true 默认展开
-});
 
 function openLightbox(src) {
     var lb = document.getElementById('lightbox');
