@@ -78,48 +78,15 @@ function initMusic() {
     var btn = document.createElement('button');
     btn.className = 'music-btn';
     btn.textContent = '♪';
-    btn.title = '点击播放音乐';
+    btn.title = '播放/暂停 - 陈奕迅 · 红玫瑰';
     document.body.appendChild(btn);
 
-    var audio = new Audio();
+    var audio = new Audio('https://music.163.com/song/media/outer/url?id=65538.mp3');
     audio.loop = true;
     audio.volume = 0.6;
-
-    // 本地文件优先，否则尝试 CORS 代理
-    var sources = [
-        BASE + '/audio/red-rose.mp3',
-        'https://corsproxy.io/?' + encodeURIComponent('https://music.163.com/song/media/outer/url?id=65538.mp3')
-    ];
-    var srcIdx = 0;
-    var loaded = false;
     var playing = false;
 
-    function tryNext() {
-        if (srcIdx >= sources.length) {
-            btn.title = '请将红玫瑰.mp3放入 audio 文件夹';
-            return;
-        }
-        audio.src = sources[srcIdx];
-        audio.load();
-    }
-
-    audio.addEventListener('canplaythrough', function() {
-        if (!loaded) {
-            loaded = true;
-            btn.title = '播放 - 陈奕迅 · 红玫瑰';
-            btn.classList.add('ready');
-        }
-    });
-
-    audio.addEventListener('error', function() {
-        srcIdx++;
-        tryNext();
-    });
-
-    tryNext();
-
     btn.addEventListener('click', function() {
-        if (!loaded) return;
         if (playing) {
             audio.pause();
             btn.classList.remove('playing');
