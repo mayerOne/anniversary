@@ -74,16 +74,67 @@ function initNav(title) {
 
 // === 音乐播放器（陈奕迅 - 红玫瑰） ===
 function initMusic() {
-    if (document.querySelector('.music-player')) return;
-    var container = document.createElement('div');
-    container.className = 'music-player';
-    container.innerHTML =
-        '<span class="music-label">♪ 陈奕迅 · 红玫瑰</span>' +
-        '<iframe frameborder="no" border="0" marginwidth="0" marginheight="0"' +
-        ' width="100%" height="52"' +
-        ' src="https://music.163.com/outchain/player?type=2&id=65538&auto=0&height=32">' +
-        '</iframe>';
-    document.body.appendChild(container);
+    if (document.querySelector('.music-btn')) return;
+    var btn = document.createElement('button');
+    btn.className = 'music-btn';
+    btn.textContent = '♪';
+    btn.title = '加载中...';
+    document.body.appendChild(btn);
+
+    var audio = null;
+    var playing = false;
+
+    function tryFetchUrl(url) {
+        return fetch(url).then(function(r) {
+            return r.blob();
+        }).then(function(blob) {
+            return URL.createObjectURL(blob);
+        });
+    }
+
+    function tryProxyApi(apiUrl) {
+        return fetch(apiUrl).then(function(r) { return r.json(); }).then(function(data) {
+            var u = data.url || (data.data && data.data.url);
+            if (!u) throw new Error('No url');
+            return u;
+        });
+    }
+
+    function initAudio(url) {
+        audio = new Audio(url);
+        audio.loop = true;
+        audio.volume = 0.6;
+        btn.title = '播放 - 陈奕迅 · 红玫瑰';
+        btn.classList.add('ready');
+    }
+
+    // 方案1: 直接 fetch NetEase API 重定向后的 blob
+    tryFetchUrl('https://music.163.com/song/media/outer/url?id=65538.mp3').then(initAudio).catch(function() {
+        // 方案2: 代理 API 获取真实地址
+        tryProxyApi('https://api.uomg.com/api/wangyiyun?types=url&id=65538').then(function(url) {
+            return tryFetchUrl(url);
+        }).then(initAudio).catch(function() {
+            // 方案3: 另一个代理
+            tryProxyApi('https://api.qqsuu.cn/api/wyymusic?type=url&id=65538').then(function(url) {
+                return tryFetchUrl(url);
+            }).then(initAudio).catch(function() {
+                btn.title = '音乐加载失败，请稍后重试';
+            });
+        });
+    });
+
+    btn.addEventListener('click', function() {
+        if (!audio) return;
+        if (playing) {
+            audio.pause();
+            btn.classList.remove('playing');
+        } else {
+            audio.play().then(function() {
+                btn.classList.add('playing');
+            }).catch(function() {});
+        }
+        playing = !playing;
+    });
 }
 
 // === 页面初始化 ===
