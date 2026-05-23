@@ -72,16 +72,17 @@ function initNav(title) {
     document.body.prepend(nav);
 }
 
-// === 音乐播放器（红玫瑰） ===
+// === 音乐播放器（陈奕迅 - 红玫瑰） ===
 function initMusic() {
-    if (document.querySelector('.music-btn')) return; // Already initialized
+    if (document.querySelector('.music-btn')) return;
     var btn = document.createElement('button');
     btn.className = 'music-btn';
     btn.textContent = '♪';
-    btn.title = '播放/暂停 - 红玫瑰';
+    btn.title = '播放/暂停 - 陈奕迅 · 红玫瑰';
     document.body.appendChild(btn);
 
-    var audio = new Audio('https://music.163.com/song/media/outer/url?id=108106.mp3');
+    // 陈奕迅 - 红玫瑰 NetEase ID: 65538
+    var audio = new Audio('https://music.163.com/song/media/outer/url?id=65538.mp3');
     audio.loop = true;
     var playing = false;
 
@@ -89,12 +90,13 @@ function initMusic() {
         if (playing) {
             audio.pause();
             btn.classList.remove('playing');
+            playing = false;
         } else {
             audio.play().then(function() {
                 btn.classList.add('playing');
             }).catch(function() {});
+            playing = true;
         }
-        playing = !playing;
     });
 }
 
