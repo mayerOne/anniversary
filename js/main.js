@@ -82,7 +82,8 @@ function initMusic() {
     document.body.appendChild(btn);
 
     // 本地文件，网易云外链已封杀红玫瑰
-    var audio = new Audio(BASE + '/audio/red-rose.mp3');
+    var audioSrc = BASE === '' ? './audio/red-rose.mp3' : BASE + '/audio/red-rose.mp3';
+    var audio = new Audio(audioSrc);
     audio.loop = true;
     audio.volume = 0.6;
     var playing = false;
