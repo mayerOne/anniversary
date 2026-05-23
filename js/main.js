@@ -74,30 +74,11 @@ function initNav(title) {
 
 // === 音乐播放器（陈奕迅 - 红玫瑰） ===
 function initMusic() {
-    if (document.querySelector('.music-btn')) return;
-    var btn = document.createElement('button');
-    btn.className = 'music-btn';
-    btn.textContent = '♪';
-    btn.title = '播放/暂停 - 陈奕迅 · 红玫瑰';
-    document.body.appendChild(btn);
-
-    // 陈奕迅 - 红玫瑰 NetEase ID: 65538
-    var audio = new Audio('https://music.163.com/song/media/outer/url?id=65538.mp3');
-    audio.loop = true;
-    var playing = false;
-
-    btn.addEventListener('click', function() {
-        if (playing) {
-            audio.pause();
-            btn.classList.remove('playing');
-            playing = false;
-        } else {
-            audio.play().then(function() {
-                btn.classList.add('playing');
-            }).catch(function() {});
-            playing = true;
-        }
-    });
+    if (document.querySelector('.music-player')) return;
+    var container = document.createElement('div');
+    container.className = 'music-player';
+    container.innerHTML = '<iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width="100%" height="52" src="https://music.163.com/outchain/player?type=2&id=65538&auto=0&height=32"></iframe>';
+    document.body.appendChild(container);
 }
 
 // === 页面初始化 ===
