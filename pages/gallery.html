@@ -130,18 +130,28 @@
 
 <script src="../js/main.js"></script>
 <script>
-// 每张照片的标题和描述，按 1.jpg, 2.jpg... 顺序
+// 每张照片的标题和描述，按 data/gallery.json 中的顺序
 var captions = [
-    { title: '第一次约会', desc: '那天我们都紧张得说不出话' },
-    { title: '一起看日落', desc: '海边的黄昏，我们靠在一起看了很久' },
-    { title: '我们的旅行', desc: '每次出发都是新的冒险' },
-    { title: '情人节', desc: '你送我花，我送你一颗心' },
-    { title: '你的笑容', desc: '全世界最好看的风景就在我身边' },
-    { title: '一起做饭', desc: '厨房里的烟火气，是最真实的幸福' },
-    { title: '圣诞快乐', desc: '满街的彩灯都不及你眼里的光' },
-    { title: '最好的我们', desc: '谢谢你出现在我的生命里' },
-    { title: '某天傍晚', desc: '和你在一起的每一个黄昏都值得被记住' },
-    { title: '我们的路', desc: '走过的每一步都有彼此的印记' }
+    { title: '记忆相片', desc: '' },
+    { title: '记忆相片', desc: '' },
+    { title: '记忆相片', desc: '' },
+    { title: '记忆相片', desc: '' },
+    { title: '记忆相片', desc: '' },
+    { title: '记忆相片', desc: '' },
+    { title: '记忆相片', desc: '' },
+    { title: '记忆相片', desc: '' },
+    { title: '记忆相片', desc: '' },
+    { title: '记忆相片', desc: '' },
+    { title: '记忆相片', desc: '' },
+    { title: '记忆相片', desc: '' },
+    { title: '记忆相片', desc: '' },
+    { title: '记忆相片', desc: '' },
+    { title: '记忆相片', desc: '' },
+    { title: '记忆相片', desc: '' },
+    { title: '记忆相片', desc: '' },
+    { title: '记忆相片', desc: '' },
+    { title: '记忆相片', desc: '' },
+    { title: '记忆相片', desc: '' }
 ];
 
 var current = 0;
@@ -150,22 +160,8 @@ var progressTimer;
 var autoplayTimer;
 var AUTOPLAY_MS = 5000;
 
-// 自动发现图片：尝试加载 ../images/gallery/1.jpg ~ 20.jpg
-function discoverImages(callback) {
-    var found = [];
-    var idx = 1;
-    function tryNext() {
-        if (idx > 20) { callback(found); return; }
-        var img = new Image();
-        img.onload = function() { found.push(idx); idx++; tryNext(); };
-        img.onerror = function() { idx++; tryNext(); };
-        img.src = '../images/gallery/' + idx + '.jpg';
-    }
-    tryNext();
-}
-
-function buildGallery(ids) {
-    total = ids.length;
+function buildGallery(files) {
+    total = files.length;
     if (total === 0) {
         document.getElementById('slidesContainer').innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text-muted);font-size:14px;">请将照片放入 images/gallery/ 文件夹 ✦</div>';
         return;
@@ -173,14 +169,15 @@ function buildGallery(ids) {
 
     var slidesHtml = '';
     var thumbsHtml = '';
-    ids.forEach(function(id, i) {
-        var cap = captions[i] || { title: '记忆', desc: '' };
+    files.forEach(function(file, i) {
+        var cap = captions[i] || { title: '记忆相片', desc: '' };
+        var src = '../images/gallery/' + file;
         slidesHtml +=
             '<div class="gallery-slide' + (i === 0 ? ' active' : '') + '">' +
-            '<img src="../images/gallery/' + id + '.jpg" alt="" onclick="openLightbox(this.src)">' +
+            '<img src="' + src + '" alt="" onclick="openLightbox(this.src)">' +
             '<div class="slide-caption"><div class="cap-title">' + cap.title + '</div>' +
             '<div class="cap-desc">' + cap.desc + '</div></div></div>';
-        thumbsHtml += '<img src="../images/gallery/' + id + '.jpg" alt="" class="' + (i === 0 ? 'active' : '') +
+        thumbsHtml += '<img src="' + src + '" alt="" class="' + (i === 0 ? 'active' : '') +
             '" onclick="goToSlide(' + i + ')">';
     });
 
@@ -249,7 +246,7 @@ function closeLightbox() {
     document.getElementById('lightbox').classList.remove('open');
 }
 
-discoverImages(buildGallery);
+fetch('../data/gallery.json').then(function(r) { return r.json(); }).then(buildGallery);
 </script>
 </body>
 </html>

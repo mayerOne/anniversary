@@ -83,10 +83,20 @@ var gifts = [
 var cells = [];
 var revealedCount = 0;
 
+function shuffle(arr) {
+    var a = arr.slice();
+    for (var i = a.length - 1; i > 0; i--) {
+        var j = Math.floor(Math.random() * (i + 1));
+        var tmp = a[i]; a[i] = a[j]; a[j] = tmp;
+    }
+    return a;
+}
+
 function buildGrid() {
     var grid = document.getElementById('scratchGrid');
     grid.innerHTML = '';
-    gifts.forEach(function(gift, idx) {
+    var shuffled = shuffle(gifts);
+    shuffled.forEach(function(gift, idx) {
         var cell = document.createElement('div');
         cell.className = 'scratch-cell';
         cell.innerHTML =
