@@ -81,7 +81,8 @@ function initMusic() {
     btn.title = '播放/暂停 - 陈奕迅 · 红玫瑰';
     document.body.appendChild(btn);
 
-    var audio = new Audio('https://music.163.com/song/media/outer/url?id=65538.mp3');
+    // 本地文件，网易云外链已封杀红玫瑰
+    var audio = new Audio(BASE + '/audio/red-rose.mp3');
     audio.loop = true;
     audio.volume = 0.6;
     var playing = false;
@@ -93,7 +94,9 @@ function initMusic() {
         } else {
             audio.play().then(function() {
                 btn.classList.add('playing');
-            }).catch(function() {});
+            }).catch(function() {
+                btn.title = '请将 red-rose.mp3 放入 audio 文件夹';
+            });
         }
         playing = !playing;
     });
