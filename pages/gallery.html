@@ -6,9 +6,77 @@
     <title>照片墙 — 我们的故事</title>
     <link rel="stylesheet" href="../css/style.css">
     <style>
-        .main { max-width: 1000px; }
+        .main { max-width: 100vw; padding: 80px 0 0; }
         body {
             background: radial-gradient(ellipse at 50% 0%, #1a1a2e 0%, #0a0a0f 60%, #000 100%);
+            overflow-x: hidden;
+        }
+
+        .gallery-stage {
+            position: relative; width: 100%; height: 75vh; min-height: 500px;
+            background: #000; overflow: hidden;
+        }
+        .gallery-slide {
+            position: absolute; inset: 0; opacity: 0; transition: opacity 1.2s ease;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .gallery-slide.active { opacity: 1; }
+        .gallery-slide img {
+            width: 100%; height: 100%; object-fit: contain;
+            animation: kenBurns 8s ease-in-out infinite alternate;
+        }
+        @keyframes kenBurns {
+            0% { transform: scale(1); }
+            100% { transform: scale(1.06); }
+        }
+        .gallery-slide .slide-caption {
+            position: absolute; bottom: 0; left: 0; right: 0;
+            padding: 60px 40px 32px;
+            background: linear-gradient(to top, rgba(0,0,0,0.85), transparent);
+            text-align: center;
+        }
+        .slide-caption .cap-title {
+            font-family: var(--font-serif); font-size: 22px;
+            color: var(--primary-glow); margin-bottom: 4px;
+        }
+        .slide-caption .cap-desc { font-size: 13px; color: rgba(255,255,255,0.6); }
+
+        /* 进度条 */
+        .progress-bar {
+            position: absolute; bottom: 0; left: 0; height: 2px;
+            background: var(--primary); z-index: 5; transition: width 0.1s linear;
+        }
+
+        /* 侧边按钮 */
+        .gallery-arrow {
+            position: absolute; top: 50%; transform: translateY(-50%); z-index: 10;
+            width: 44px; height: 44px; border-radius: 50%; border: none;
+            background: rgba(20,20,35,0.6); backdrop-filter: blur(8px);
+            color: var(--primary-glow); font-size: 20px; cursor: pointer;
+            transition: all 0.3s; display: flex; align-items: center; justify-content: center;
+        }
+        .gallery-arrow:hover { background: rgba(201,169,110,0.3); }
+        .gallery-arrow.prev { left: 20px; }
+        .gallery-arrow.next { right: 20px; }
+
+        /* 缩略图 */
+        .thumb-strip {
+            display: flex; gap: 8px; justify-content: center; padding: 14px 20px;
+            overflow-x: auto; -webkit-overflow-scrolling: touch;
+            background: rgba(10,10,15,0.5);
+        }
+        .thumb-strip img {
+            width: 56px; height: 38px; object-fit: cover; border-radius: 6px;
+            cursor: pointer; opacity: 0.4; transition: all 0.3s;
+            border: 2px solid transparent; flex-shrink: 0;
+        }
+        .thumb-strip img.active { opacity: 1; border-color: var(--primary); }
+        .thumb-strip img:hover { opacity: 0.8; }
+
+        .counter {
+            position: absolute; top: 20px; right: 28px; z-index: 5;
+            font-size: 13px; color: rgba(255,255,255,0.5);
+            letter-spacing: 2px;
         }
 
         .full-lightbox {
@@ -25,27 +93,36 @@
         .full-lightbox.open img { transform: scale(1); }
         .lightbox-close {
             position: absolute; top: 24px; right: 36px; color: #fff;
-            font-size: 36px; cursor: pointer; opacity: 0.5; transition: opacity 0.2s;
-            z-index: 2;
+            font-size: 36px; cursor: pointer; opacity: 0.5; z-index: 2;
         }
         .lightbox-close:hover { opacity: 1; }
+
+        @media (max-width: 600px) {
+            .gallery-stage { height: 55vh; min-height: 380px; }
+            .gallery-arrow { width: 36px; height: 36px; font-size: 16px; }
+            .gallery-arrow.prev { left: 8px; }
+            .gallery-arrow.next { right: 8px; }
+            .slide-caption .cap-title { font-size: 17px; }
+            .thumb-strip img { width: 44px; height: 30px; }
+        }
     </style>
 </head>
 <body>
 
 <div class="main">
-    <h1 class="page-title">记忆相册</h1>
-    <p class="page-subtitle">每一帧都是最美的时光</p>
+    <h1 class="page-title" style="margin-bottom:8px;">记忆相册</h1>
+    <p class="page-subtitle" style="margin-bottom:20px;">每一帧都是最美的时光</p>
 
-    <div class="carousel-container" id="carousel">
-        <div class="carousel-track" id="carouselTrack"></div>
-        <button class="carousel-btn prev" onclick="prevSlide()">&#10094;</button>
-        <button class="carousel-btn next" onclick="nextSlide()">&#10095;</button>
-        <div class="carousel-dots" id="carouselDots"></div>
+    <div class="gallery-stage" id="stage">
+        <span class="counter" id="counter">1 / 1</span>
+        <div id="slidesContainer"></div>
+        <div class="progress-bar" id="progressBar"></div>
+        <button class="gallery-arrow prev" onclick="prevSlide()">&#10094;</button>
+        <button class="gallery-arrow next" onclick="nextSlide()">&#10095;</button>
     </div>
+    <div class="thumb-strip" id="thumbStrip"></div>
 </div>
 
-<!-- 灯箱 -->
 <div class="full-lightbox" id="lightbox" onclick="closeLightbox()">
     <span class="lightbox-close">&times;</span>
     <img id="lightboxImg" src="" alt="">
@@ -53,58 +130,102 @@
 
 <script src="../js/main.js"></script>
 <script>
-var photos = [
-    { src: 'https://picsum.photos/seed/couple1/1200/800', title: '第一次约会', desc: '那天我们都紧张得说不出话' },
-    { src: 'https://picsum.photos/seed/couple2/1200/800', title: '一起看日落', desc: '海边的黄昏，我们靠在一起看了很久' },
-    { src: 'https://picsum.photos/seed/couple3/1200/800', title: '我们的旅行', desc: '每次出发都是新的冒险' },
-    { src: 'https://picsum.photos/seed/couple4/1200/800', title: '情人节', desc: '你送我花，我送你一颗心' },
-    { src: 'https://picsum.photos/seed/couple5/1200/800', title: '你的笑容', desc: '全世界最好看的风景就在我身边' },
-    { src: 'https://picsum.photos/seed/couple6/1200/800', title: '一起做饭', desc: '厨房里的烟火气，是最真实的幸福' },
-    { src: 'https://picsum.photos/seed/couple7/1200/800', title: '圣诞快乐', desc: '满街的彩灯都不及你眼里的光' },
-    { src: 'https://picsum.photos/seed/couple8/1200/800', title: '最好的我们', desc: '谢谢你出现在我的生命里' },
+// 每张照片的标题和描述，按 1.jpg, 2.jpg... 顺序
+var captions = [
+    { title: '第一次约会', desc: '那天我们都紧张得说不出话' },
+    { title: '一起看日落', desc: '海边的黄昏，我们靠在一起看了很久' },
+    { title: '我们的旅行', desc: '每次出发都是新的冒险' },
+    { title: '情人节', desc: '你送我花，我送你一颗心' },
+    { title: '你的笑容', desc: '全世界最好看的风景就在我身边' },
+    { title: '一起做饭', desc: '厨房里的烟火气，是最真实的幸福' },
+    { title: '圣诞快乐', desc: '满街的彩灯都不及你眼里的光' },
+    { title: '最好的我们', desc: '谢谢你出现在我的生命里' },
+    { title: '某天傍晚', desc: '和你在一起的每一个黄昏都值得被记住' },
+    { title: '我们的路', desc: '走过的每一步都有彼此的印记' }
 ];
 
-var currentSlide = 0;
-var track = document.getElementById('carouselTrack');
-var dotsContainer = document.getElementById('carouselDots');
+var current = 0;
+var total = 0;
+var progressTimer;
 var autoplayTimer;
+var AUTOPLAY_MS = 5000;
 
-function buildCarousel() {
-    track.innerHTML = photos.map(function(p, i) {
-        return '<div class="carousel-slide">' +
-            '<img src="' + p.src + '" alt="' + p.title + '" loading="lazy">' +
-            '<div class="overlay"><div class="slide-title">' + p.title + '</div>' +
-            '<div class="slide-desc">' + p.desc + '</div></div></div>';
-    }).join('');
+// 自动发现图片：尝试加载 ../images/gallery/1.jpg ~ 20.jpg
+function discoverImages(callback) {
+    var found = [];
+    var idx = 1;
+    function tryNext() {
+        if (idx > 20) { callback(found); return; }
+        var img = new Image();
+        img.onload = function() { found.push(idx); idx++; tryNext(); };
+        img.onerror = function() { idx++; tryNext(); };
+        img.src = '../images/gallery/' + idx + '.jpg';
+    }
+    tryNext();
+}
 
-    dotsContainer.innerHTML = photos.map(function(_, i) {
-        return '<button class="carousel-dot' + (i === 0 ? ' active' : '') +
-            '" onclick="goToSlide(' + i + ')"></button>';
-    }).join('');
+function buildGallery(ids) {
+    total = ids.length;
+    if (total === 0) {
+        document.getElementById('slidesContainer').innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text-muted);font-size:14px;">请将照片放入 images/gallery/ 文件夹 ✦</div>';
+        return;
+    }
 
-    track.querySelectorAll('.carousel-slide img').forEach(function(img) {
-        img.addEventListener('click', function(e) {
-            e.stopPropagation();
-            openLightbox(img.src);
-        });
+    var slidesHtml = '';
+    var thumbsHtml = '';
+    ids.forEach(function(id, i) {
+        var cap = captions[i] || { title: '记忆', desc: '' };
+        slidesHtml +=
+            '<div class="gallery-slide' + (i === 0 ? ' active' : '') + '">' +
+            '<img src="../images/gallery/' + id + '.jpg" alt="" onclick="openLightbox(this.src)">' +
+            '<div class="slide-caption"><div class="cap-title">' + cap.title + '</div>' +
+            '<div class="cap-desc">' + cap.desc + '</div></div></div>';
+        thumbsHtml += '<img src="../images/gallery/' + id + '.jpg" alt="" class="' + (i === 0 ? 'active' : '') +
+            '" onclick="goToSlide(' + i + ')">';
     });
+
+    document.getElementById('slidesContainer').innerHTML = slidesHtml;
+    document.getElementById('thumbStrip').innerHTML = thumbsHtml;
+    document.getElementById('counter').textContent = '1 / ' + total;
+    startAutoplay();
 }
 
 function goToSlide(n) {
-    currentSlide = (n + photos.length) % photos.length;
-    track.style.transform = 'translateX(-' + (currentSlide * 100) + '%)';
-    dotsContainer.querySelectorAll('.carousel-dot').forEach(function(d, i) {
-        d.classList.toggle('active', i === currentSlide);
-    });
+    n = (n + total) % total;
+    var slides = document.querySelectorAll('.gallery-slide');
+    slides[current].classList.remove('active');
+    slides[n].classList.add('active');
+
+    var thumbs = document.querySelectorAll('.thumb-strip img');
+    if (thumbs[current]) thumbs[current].classList.remove('active');
+    if (thumbs[n]) thumbs[n].classList.add('active');
+
+    current = n;
+    document.getElementById('counter').textContent = (n + 1) + ' / ' + total;
     resetAutoplay();
 }
 
-function nextSlide() { goToSlide(currentSlide + 1); }
-function prevSlide() { goToSlide(currentSlide - 1); }
+function nextSlide() { goToSlide(current + 1); }
+function prevSlide() { goToSlide(current - 1); }
 
 function resetAutoplay() {
     clearInterval(autoplayTimer);
-    autoplayTimer = setInterval(nextSlide, 4000);
+    clearInterval(progressTimer);
+    var bar = document.getElementById('progressBar');
+    bar.style.transition = 'none';
+    bar.style.width = '0%';
+
+    var start = Date.now();
+    progressTimer = setInterval(function() {
+        var pct = ((Date.now() - start) / AUTOPLAY_MS) * 100;
+        if (pct >= 100) {
+            pct = 100;
+            clearInterval(progressTimer);
+        }
+        bar.style.width = pct + '%';
+    }, 50);
+
+    autoplayTimer = setTimeout(function() { nextSlide(); }, AUTOPLAY_MS);
 }
 
 document.addEventListener('keydown', function(e) {
@@ -114,10 +235,8 @@ document.addEventListener('keydown', function(e) {
 });
 
 var touchStartX = 0;
-document.getElementById('carousel').addEventListener('touchstart', function(e) {
-    touchStartX = e.touches[0].clientX;
-});
-document.getElementById('carousel').addEventListener('touchend', function(e) {
+document.getElementById('stage').addEventListener('touchstart', function(e) { touchStartX = e.touches[0].clientX; });
+document.getElementById('stage').addEventListener('touchend', function(e) {
     var diff = e.changedTouches[0].clientX - touchStartX;
     if (Math.abs(diff) > 50) { diff > 0 ? prevSlide() : nextSlide(); }
 });
@@ -130,8 +249,7 @@ function closeLightbox() {
     document.getElementById('lightbox').classList.remove('open');
 }
 
-buildCarousel();
-resetAutoplay();
+discoverImages(buildGallery);
 </script>
 </body>
 </html>
