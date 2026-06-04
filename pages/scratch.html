@@ -3,66 +3,140 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>刮刮乐 — 九宫格惊喜</title>
+    <title>老虎机 — 惊喜大奖</title>
     <link rel="stylesheet" href="../css/style.css">
     <style>
-        .main { max-width: 620px; }
+        .main { max-width: 560px; }
         body { background: radial-gradient(ellipse at 50% 0%, #1a1a2e 0%, #0a0a0f 60%, #000 100%); }
-        .scratch-grid {
-            display: grid; grid-template-columns: repeat(3, 1fr);
-            gap: 14px; max-width: 540px; margin: 0 auto;
-        }
-        .scratch-cell {
-            position: relative; aspect-ratio: 1; border-radius: 16px;
-            overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.4);
-            border: 1px solid var(--border);
-            transition: transform 0.3s;
-        }
-        .scratch-cell:hover { transform: translateY(-2px); }
 
-        .scratch-result {
-            position: absolute; inset: 0;
-            display: flex; flex-direction: column;
+        .slot-machine {
+            background: linear-gradient(180deg, rgba(201,169,110,0.12), rgba(201,169,110,0.04));
+            border: 1px solid rgba(201,169,110,0.25);
+            border-radius: 24px; padding: 36px 28px 28px;
+            box-shadow: 0 12px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(201,169,110,0.1) inset;
+            max-width: 480px; margin: 0 auto;
+        }
+
+        .slot-top {
+            text-align: center; margin-bottom: 20px;
+        }
+        .slot-top .jackpot {
+            font-size: 12px; color: var(--text-muted); letter-spacing: 3px;
+            margin-bottom: 4px; text-transform: uppercase;
+        }
+        .slot-top .jackpot-val {
+            font-family: var(--font-serif); font-size: 32px; color: var(--primary-glow);
+            text-shadow: 0 0 20px rgba(201,169,110,0.4);
+        }
+
+        .reels {
+            display: flex; gap: 12px; justify-content: center; margin-bottom: 24px;
+        }
+        .reel-window {
+            width: 120px; height: 140px;
+            background: rgba(0,0,0,0.5); border-radius: 16px;
+            overflow: hidden; position: relative;
+            border: 2px solid rgba(201,169,110,0.3);
+            box-shadow: 0 0 0 4px rgba(0,0,0,0.4), 0 0 30px rgba(201,169,110,0.1) inset;
+        }
+        .reel-window::before, .reel-window::after {
+            content: ''; position: absolute; left: 0; right: 0; height: 40px; z-index: 2; pointer-events: none;
+        }
+        .reel-window::before { top: 0; background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent); }
+        .reel-window::after { bottom: 0; background: linear-gradient(to top, rgba(0,0,0,0.8), transparent); }
+
+        .reel-strip {
+            transition: transform 0.3s cubic-bezier(0.1, 0.6, 0.3, 1);
+            will-change: transform;
+        }
+        .reel-strip .item {
+            height: 70px; display: flex; flex-direction: column;
             align-items: center; justify-content: center;
-            padding: 12px; background: rgba(20,20,35,0.95);
-            z-index: 0; text-align: center;
+            font-size: 36px; line-height: 1;
         }
-        .scratch-result .gift-icon { font-size: 36px; margin-bottom: 6px; }
-        .scratch-result .gift-text { font-size: 12px; color: var(--text-muted); line-height: 1.5; }
-        .scratch-result .gift-title { font-size: 14px; color: var(--primary-glow); margin-bottom: 4px; font-weight: 600; }
-
-        .scratch-canvas {
-            position: absolute; inset: 0; z-index: 1; width: 100%; height: 100%;
-            cursor: crosshair; transition: opacity 0.6s;
+        .reel-strip .item .name {
+            font-size: 10px; color: var(--text-muted); margin-top: 2px;
         }
 
-        .scratch-controls { text-align: center; margin-top: 24px; }
-        .scratch-controls button {
-            padding: 10px 28px; border-radius: 50px; border: 1px solid var(--border);
-            background: rgba(201,169,110,0.1); color: var(--primary-glow);
-            font-size: 14px; cursor: pointer; transition: all 0.3s; letter-spacing: 1px;
+        /* 高亮线 */
+        .reel-window .win-line {
+            position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-50%);
+            height: 70px; border-top: 1px dashed rgba(201,169,110,0.3);
+            border-bottom: 1px dashed rgba(201,169,110,0.3);
+            pointer-events: none; z-index: 1;
         }
-        .scratch-controls button:hover { background: rgba(201,169,110,0.2); }
-        .scratch-controls button:active { transform: scale(0.96); }
+
+        .slot-result {
+            text-align: center; min-height: 48px; margin-bottom: 16px;
+        }
+        .slot-result .prize-title {
+            font-family: var(--font-serif); font-size: 20px; color: var(--primary-glow);
+        }
+        .slot-result .prize-text { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
+
+        .spin-btn {
+            display: block; margin: 0 auto; padding: 16px 56px;
+            border: none; border-radius: 50px; cursor: pointer;
+            font-size: 20px; letter-spacing: 4px; font-family: var(--font-sans);
+            background: linear-gradient(135deg, var(--primary) 0%, #a0844e 100%);
+            color: #fff; box-shadow: 0 8px 32px rgba(201,169,110,0.35);
+            transition: all 0.3s;
+        }
+        .spin-btn:hover { transform: translateY(-2px); box-shadow: 0 14px 48px rgba(201,169,110,0.5); }
+        .spin-btn:active { transform: scale(0.95); }
+        .spin-btn:disabled { opacity: 0.5; cursor: not-allowed; pointer-events: none; }
+
+        .win-flash {
+            animation: winGlow 0.6s ease-out;
+        }
+        @keyframes winGlow {
+            0% { box-shadow: 0 0 0 rgba(201,169,110,0), 0 0 0 rgba(201,169,110,0) inset; }
+            50% { box-shadow: 0 0 60px rgba(201,169,110,0.6), 0 0 40px rgba(201,169,110,0.3) inset; }
+            100% { box-shadow: 0 0 0 rgba(201,169,110,0), 0 0 0 rgba(201,169,110,0) inset; }
+        }
+
+        .history { margin-top: 24px; text-align: center; }
+        .history .badge {
+            display: inline-block; padding: 4px 12px; margin: 3px; border-radius: 12px;
+            font-size: 11px; background: rgba(201,169,110,0.1); color: var(--primary-glow);
+            border: 1px solid rgba(201,169,110,0.2);
+        }
 
         @media (max-width: 500px) {
-            .scratch-grid { gap: 8px; }
-            .scratch-result .gift-icon { font-size: 24px; }
-            .scratch-result .gift-text { font-size: 10px; }
-            .scratch-result .gift-title { font-size: 11px; }
+            .slot-machine { padding: 24px 12px 20px; }
+            .reel-window { width: 90px; height: 110px; }
+            .reel-strip .item { height: 55px; font-size: 28px; }
+            .reel-window .win-line { height: 55px; }
+            .spin-btn { padding: 14px 40px; font-size: 17px; }
         }
     </style>
 </head>
 <body>
 
 <div class="main">
-    <h1 class="page-title">刮刮乐</h1>
-    <p class="page-subtitle">刮开每一格，发现九个不一样的惊喜 ✦</p>
+    <h1 class="page-title">幸运老虎机</h1>
+    <p class="page-subtitle">按下按钮，看看今天抽中什么惊喜 ✦</p>
 
-    <div class="scratch-grid" id="scratchGrid"></div>
-    <div class="scratch-hint" id="globalHint" style="text-align:center;margin-top:16px;">👆 用手指轻轻刮开每一格</div>
-    <div class="scratch-controls">
-        <button onclick="resetAll()">重新来过 ✦</button>
+    <div class="slot-machine" id="machine">
+        <div class="slot-top">
+            <div class="jackpot">✦ JACKPOT ✦</div>
+            <div class="jackpot-val" id="jackpot">???</div>
+        </div>
+
+        <div class="reels">
+            <div class="reel-window"><div class="win-line"></div><div class="reel-strip" id="reel0"></div></div>
+            <div class="reel-window"><div class="win-line"></div><div class="reel-strip" id="reel1"></div></div>
+            <div class="reel-window"><div class="win-line"></div><div class="reel-strip" id="reel2"></div></div>
+        </div>
+
+        <div class="slot-result">
+            <div class="prize-title" id="prizeTitle"></div>
+            <div class="prize-text" id="prizeText"></div>
+        </div>
+
+        <button class="spin-btn" id="spinBtn" onclick="spin()">✦ 旋 转 ✦</button>
+
+        <div class="history" id="history"></div>
     </div>
 </div>
 
@@ -77,160 +151,93 @@ var gifts = [
     { icon: '💆', title: '按摩券', text: '随叫随到，包你满意' },
     { icon: '🎁', title: '神秘礼物', text: '拆开才知道是什么哦' },
     { icon: '💤', title: '陪你赖床', text: '周末上午全都是你的' },
-    { icon: '💍', title: '最好的礼物', text: '我的余生，都给你' },
+    { icon: '💍', title: '最好的礼物', text: '我的余生，都给你' }
 ];
 
-var cells = [];
-var revealedCount = 0;
+var REEL_COUNT = 3;
+var ITEM_HEIGHT = 70;
+var SPIN_EXTRA = 6;
+var prizeHistory = [];
+var spinning = false;
 
-function shuffle(arr) {
-    var a = arr.slice();
-    for (var i = a.length - 1; i > 0; i--) {
-        var j = Math.floor(Math.random() * (i + 1));
-        var tmp = a[i]; a[i] = a[j]; a[j] = tmp;
-    }
-    return a;
+function getItemHeight() {
+    var item = document.querySelector('.reel-strip .item');
+    return item ? item.offsetHeight : ITEM_HEIGHT;
 }
 
-function buildGrid() {
-    var grid = document.getElementById('scratchGrid');
-    grid.innerHTML = '';
-    var shuffled = shuffle(gifts);
-    shuffled.forEach(function(gift, idx) {
-        var cell = document.createElement('div');
-        cell.className = 'scratch-cell';
-        cell.innerHTML =
-            '<div class="scratch-result">' +
-            '<div class="gift-icon">' + gift.icon + '</div>' +
-            '<div class="gift-title">' + gift.title + '</div>' +
-            '<div class="gift-text">' + gift.text + '</div>' +
-            '</div>' +
-            '<canvas class="scratch-canvas" id="cv' + idx + '"></canvas>';
-        grid.appendChild(cell);
-    });
-    setTimeout(initCanvases, 300);
+function buildReelStrip() {
+    var shuffled = gifts.slice().sort(function() { return Math.random() - 0.5; });
+    var triple = shuffled.concat(shuffled).concat(shuffled);
+    return triple.map(function(g) {
+        return '<div class="item"><span>' + g.icon + '</span><span class="name">' + g.title + '</span></div>';
+    }).join('');
 }
 
-function initCanvases() {
-    cells = [];
-    for (var idx = 0; idx < 9; idx++) {
-        var canvas = document.getElementById('cv' + idx);
-        if (!canvas) continue;
-        var parent = canvas.parentElement;
-        var rect = parent.getBoundingClientRect();
-        canvas.width = rect.width;
-        canvas.height = rect.height;
-        var ctx = canvas.getContext('2d');
-        drawCoating(ctx, canvas.width, canvas.height);
-        cells.push({ canvas: canvas, ctx: ctx, revealed: false });
-        bindEvents(canvas, ctx, idx);
+function initReels() {
+    ITEM_HEIGHT = getItemHeight();
+    for (var i = 0; i < REEL_COUNT; i++) {
+        document.getElementById('reel' + i).innerHTML = buildReelStrip();
+        var offset = Math.floor(Math.random() * gifts.length) * ITEM_HEIGHT + gifts.length * ITEM_HEIGHT;
+        document.getElementById('reel' + i).style.transform = 'translateY(-' + offset + 'px)';
     }
 }
 
-function drawCoating(ctx, w, h) {
-    var grad = ctx.createLinearGradient(0, 0, w, h);
-    grad.addColorStop(0, '#5a4a2f');
-    grad.addColorStop(0.5, '#8b7355');
-    grad.addColorStop(1, '#5a4a2f');
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, w, h);
-    ctx.fillStyle = 'rgba(201,169,110,0.35)';
-    ctx.font = Math.max(11, w * 0.05) + 'px Georgia, serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('✦ 刮开 ✦', w / 2, h / 2);
+function spin() {
+    if (spinning) return;
+    spinning = true;
+    ITEM_HEIGHT = getItemHeight();
+    var btn = document.getElementById('spinBtn');
+    btn.disabled = true;
+    btn.textContent = '✦ ... ✦';
+    document.getElementById('prizeTitle').textContent = '';
+    document.getElementById('prizeText').textContent = '';
+    document.getElementById('jackpot').textContent = '???';
+
+    var results = [];
+    var maxDelay = 0;
+
+    for (var i = 0; i < REEL_COUNT; i++) {
+        (function(idx) {
+            var resultIdx = Math.floor(Math.random() * gifts.length);
+            results.push(resultIdx);
+            var midCopy = gifts.length * ITEM_HEIGHT;
+            var target = midCopy + resultIdx * ITEM_HEIGHT + gifts.length * SPIN_EXTRA * ITEM_HEIGHT;
+            var duration = 800 + idx * 400;
+            maxDelay = Math.max(maxDelay, duration);
+
+            setTimeout(function() {
+                var reel = document.getElementById('reel' + idx);
+                reel.style.transition = 'transform ' + (0.5 + idx * 0.2) + 's cubic-bezier(0.12, 0.82, 0.28, 1)';
+                reel.style.transform = 'translateY(-' + target + 'px)';
+            }, idx * 200);
+        })(i);
+    }
+
+    setTimeout(function() {
+        var prize = gifts[results[0]];
+        document.getElementById('jackpot').textContent = prize.icon;
+        document.getElementById('prizeTitle').textContent = prize.title;
+        document.getElementById('prizeText').textContent = prize.text;
+        document.getElementById('machine').classList.add('win-flash');
+        setTimeout(function() { document.getElementById('machine').classList.remove('win-flash'); }, 600);
+
+        prizeHistory.unshift(prize.icon + ' ' + prize.title);
+        if (prizeHistory.length > 8) prizeHistory.pop();
+        renderHistory();
+
+        btn.textContent = '✦ 再抽一次 ✦';
+        btn.disabled = false;
+        spinning = false;
+    }, maxDelay + 600);
 }
 
-function bindEvents(canvas, ctx, idx) {
-    var isDrawing = false;
-
-    function getPos(e) {
-        var r = canvas.getBoundingClientRect();
-        var t = e.touches ? e.touches[0] : e;
-        return {
-            x: (t.clientX - r.left) * (canvas.width / r.width),
-            y: (t.clientY - r.top) * (canvas.height / r.height)
-        };
-    }
-
-    function scratch(x, y) {
-        if (cells[idx] && cells[idx].revealed) return;
-        ctx.globalCompositeOperation = 'destination-out';
-        ctx.beginPath();
-        ctx.arc(x, y, Math.max(16, canvas.width * 0.07), 0, Math.PI * 2);
-        ctx.fill();
-        ctx.globalCompositeOperation = 'source-over';
-    }
-
-    function calcPercent() {
-        var d = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
-        var t = 0;
-        for (var i = 3; i < d.length; i += 4) { if (d[i] === 0) t++; }
-        return (t / (d.length / 4)) * 100;
-    }
-
-    canvas.addEventListener('mousedown', function(e) {
-        if (cells[idx] && cells[idx].revealed) return;
-        isDrawing = true;
-        var p = getPos(e);
-        scratch(p.x, p.y);
-    });
-    canvas.addEventListener('mousemove', function(e) {
-        if (!isDrawing || (cells[idx] && cells[idx].revealed)) return;
-        var p = getPos(e);
-        scratch(p.x, p.y);
-        if (calcPercent() > 40) revealCell(idx);
-    });
-    canvas.addEventListener('mouseup', function() { isDrawing = false; });
-    canvas.addEventListener('mouseleave', function() { isDrawing = false; });
-    canvas.addEventListener('touchstart', function(e) {
-        if (cells[idx] && cells[idx].revealed) return;
-        e.preventDefault();
-        isDrawing = true;
-        var p = getPos(e);
-        scratch(p.x, p.y);
-    }, { passive: false });
-    canvas.addEventListener('touchmove', function(e) {
-        if (!isDrawing || (cells[idx] && cells[idx].revealed)) return;
-        e.preventDefault();
-        var p = getPos(e);
-        scratch(p.x, p.y);
-        if (calcPercent() > 40) revealCell(idx);
-    }, { passive: false });
-    canvas.addEventListener('touchend', function() { isDrawing = false; });
+function renderHistory() {
+    document.getElementById('history').innerHTML = prizeHistory.map(function(h) {
+        return '<span class="badge">' + h + '</span>';
+    }).join('');
 }
 
-function revealCell(idx) {
-    if (!cells[idx] || cells[idx].revealed) return;
-    cells[idx].revealed = true;
-    cells[idx].canvas.style.opacity = '0';
-    revealedCount++;
-    if (revealedCount === 9) {
-        document.getElementById('globalHint').textContent = '🎉 所有惊喜都揭开了！感谢你走进我的世界 ✦';
-    } else {
-        document.getElementById('globalHint').textContent = '已揭开 ' + revealedCount + '/9 个惊喜 ✦ 继续刮吧';
-    }
-}
-
-function resetAll() {
-    revealedCount = 0;
-    document.getElementById('globalHint').textContent = '👆 用手指轻轻刮开每一格';
-    for (var i = 0; i < cells.length; i++) {
-        if (cells[i]) {
-            cells[i].revealed = false;
-            cells[i].canvas.style.opacity = '1';
-            drawCoating(cells[i].ctx, cells[i].canvas.width, cells[i].canvas.height);
-        }
-    }
-}
-
-buildGrid();
-
-var resizeTimeout;
-window.addEventListener('resize', function() {
-    clearTimeout(resizeTimeout);
-    resizeTimeout = setTimeout(initCanvases, 400);
-});
+initReels();
 </script>
 </body>
 </html>
