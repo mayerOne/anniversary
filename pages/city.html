@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>城市记忆</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <style>
+        body {
+            background: radial-gradient(ellipse at 50% 0%, #1a1a2e 0%, #0a0a0f 60%, #000 100%);
+            min-height: 100vh;
+        }
+        .main { max-width: 800px; padding-top: 60px; }
+
+        .back-link {
+            display: inline-flex; align-items: center; gap: 6px;
+            color: var(--text-muted); font-size: 13px; margin-bottom: 32px;
+            transition: color 0.2s; text-decoration: none;
+        }
+        .back-link:hover { color: var(--primary-glow); }
+
+        .city-header {
+            text-align: center; margin-bottom: 40px;
+        }
+        .city-header .icon { font-size: 48px; margin-bottom: 8px; }
+        .city-header h2 {
+            font-family: var(--font-serif); font-size: 28px;
+            color: var(--primary-glow); letter-spacing: 3px;
+        }
+        .city-header .desc { color: var(--text-muted); font-size: 14px; margin-top: 6px; }
+
+        .photo-grid {
+            columns: 2; column-gap: 12px;
+        }
+        .photo-grid img {
+            width: 100%; border-radius: 12px; margin-bottom: 12px;
+            cursor: pointer; transition: transform 0.3s, box-shadow 0.3s;
+            display: block; break-inside: avoid;
+        }
+        .photo-grid img:hover {
+            transform: scale(1.03);
+            box-shadow: 0 8px 32px rgba(201,169,110,0.2);
+        }
+
+        .empty-state {
+            text-align: center; padding: 60px 20px; color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        .lightbox {
+            position: fixed; inset: 0; z-index: 99999;
+            background: rgba(0,0,0,0.96);
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; visibility: hidden; transition: opacity 0.3s;
+        }
+        .lightbox.open { opacity: 1; visibility: visible; }
+        .lightbox img {
+            max-width: 92vw; max-height: 88vh; border-radius: 8px;
+            transform: scale(0.92); transition: transform 0.3s;
+        }
+        .lightbox.open img { transform: scale(1); }
+        .lightbox .close {
+            position: absolute; top: 20px; right: 32px; color: #fff;
+            font-size: 32px; cursor: pointer; opacity: 0.5; z-index: 2;
+        }
+        .lightbox .close:hover { opacity: 1; }
+
+        @media (max-width: 500px) {
+            .photo-grid { columns: 1; }
+            .main { padding-top: 50px; padding-left: 12px; padding-right: 12px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="main">
+    <a class="back-link" href="map.html">← 返回足迹地图</a>
+    <div class="city-header">
+        <div class="icon" id="cityIcon"></div>
+        <h2 id="cityTitle"></h2>
+        <div class="desc" id="cityDesc"></div>
+    </div>
+    <div class="photo-grid" id="photoGrid"></div>
+    <div class="empty-state" id="emptyState" style="display:none;">还没有添加照片 ✦</div>
+</div>
+
+<div class="lightbox" id="lightbox" onclick="closeLightbox()">
+    <span class="close">&times;</span>
+    <img id="lightboxImg" src="" alt="">
+</div>
+
+<script src="../js/main.js"></script>
+<script>
+var cities = {
+    shenzhen:   { title: '深圳', desc: '我们相遇相爱的城市，是一切开始的地方。', icon: '🏙️' },
+    shanghai:   { title: '上海', desc: '外滩夜景，南京路漫步，你说这城市太魔幻了。', icon: '🌃' },
+    nanjing:    { title: '南京', desc: '秦淮河畔灯火阑珊，梧桐树下漫步整座城。', icon: '🏛️' },
+    hangzhou:   { title: '杭州', desc: '西湖断桥残雪，雷峰塔下我们许了愿。', icon: '🌊' },
+    suzhou:     { title: '苏州', desc: '拙政园里听评弹，平江路上牵手漫步。', icon: '🏡' },
+    guangzhou:  { title: '广州', desc: '肠粉早茶西关老巷，你说这里是美食天堂。', icon: '🥟' },
+    chongqing:  { title: '重庆', desc: '洪崖洞的夜景像千与千寻，火锅辣到流眼泪。', icon: '🌆' },
+    nanchang:   { title: '南昌', desc: '滕王阁上望赣江，英雄城里走一走。', icon: '🏯' },
+    pingxiang:  { title: '萍乡', desc: '萍水相逢，却是此生最美的意外。', icon: '⛰️' },
+    hengyang:   { title: '衡阳', desc: '衡山脚下，你说要一起看遍世间风景。', icon: '🏔️' },
+    changsha:   { title: '长沙', desc: '橘子洲头烟花绚烂，茶颜悦色一人一杯。', icon: '🎆' },
+    fuzhou:     { title: '福州', desc: '三坊七巷走九遍，鱼丸肉燕吃不够。', icon: '🍜' },
+    pingtan:    { title: '平潭岛', desc: '蓝眼泪划过海岸，像极了爱情的模样。', icon: '🏝️' }
+};
+
+var slug = new URLSearchParams(location.search).get('city') || 'shenzhen';
+var city = cities[slug];
+
+if (city) {
+    document.title = city.title + ' — 我们的足迹';
+    document.getElementById('cityIcon').textContent = city.icon;
+    document.getElementById('cityTitle').textContent = city.title;
+    document.getElementById('cityDesc').textContent = city.desc;
+}
+
+fetch('../data/map.json').then(function(r) { return r.json(); }).then(function(data) {
+    var photos = data[slug] || [];
+    if (!photos.length) {
+        document.getElementById('emptyState').style.display = 'block';
+        return;
+    }
+    var html = photos.map(function(f) {
+        var src = '../images/map/' + slug + '/' + f;
+        return '<img src="' + src + '" alt="" onclick="openLightbox(this.src)" loading="lazy" onerror="this.style.display=\'none\'">';
+    }).join('');
+    document.getElementById('photoGrid').innerHTML = html;
+});
+
+function openLightbox(src) {
+    document.getElementById('lightboxImg').src = src;
+    document.getElementById('lightbox').classList.add('open');
+}
+function closeLightbox() {
+    document.getElementById('lightbox').classList.remove('open');
+}
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeLightbox();
+});
+</script>
+</body>
+</html>

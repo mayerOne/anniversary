@@ -145,28 +145,17 @@ loadLeaflet(function() {
 
     fetch('../data/map.json').then(function(r) { return r.json(); }).then(function(mapData) {
         places.forEach(function(place) {
-            var photos = mapData[place.slug] || [];
-            var photosHtml = photos.map(function(f) {
-                var src = '../images/map/' + place.slug + '/' + f;
-                return '<img src="' + src + '" alt="" onclick="openLightbox(\'' + src + '\')" loading="lazy" onerror="this.style.display=\'none\'">';
-            }).join('');
-
-            var marker = L.marker([place.lat, place.lng], { icon: goldIcon }).addTo(map)
-                .bindTooltip('<div class="map-popup"><strong>✦ ' + place.title + '</strong>' +
-                    '<p class="desc-text">' + place.desc + '</p>' +
-                    '<div class="popup-photos">' + photosHtml + '</div></div>', {
-                    permanent: true, direction: 'auto', className: 'map-permanent-tooltip'
-                });
-            markers.push(marker);
+            var marker = L.marker([place.lat, place.lng], { icon: goldIcon }).addTo(map);
+            marker.on('click', function() {
+                location.href = 'city.html?city=' + place.slug;
+            });
 
             var legendItem = document.createElement('div');
             legendItem.className = 'legend-item';
             legendItem.innerHTML = '<span class="legend-dot"></span>' + place.title;
-            (function(place, marker) {
-                legendItem.addEventListener('click', function() {
-                    map.setView([place.lat, place.lng], 12);
-                });
-            })(place, marker);
+            legendItem.addEventListener('click', function() {
+                location.href = 'city.html?city=' + place.slug;
+            });
             legendContainer.appendChild(legendItem);
         });
     });
