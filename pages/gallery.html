@@ -3,250 +3,398 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>照片墙 — 我们的故事</title>
+    <title>记忆相册</title>
     <link rel="stylesheet" href="../css/style.css">
     <style>
-        .main { max-width: 100vw; padding: 80px 0 0; }
-        body {
-            background: radial-gradient(ellipse at 50% 0%, #1a1a2e 0%, #0a0a0f 60%, #000 100%);
-            overflow-x: hidden;
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #000; overflow: hidden; height: 100vh; }
+        .nav { z-index: 20 !important; background: rgba(0,0,0,0.55) !important; }
+
+        .stage { display: flex; flex-direction: column; height: 100vh; width: 100vw; }
+
+        .screen {
+            flex: 1; position: relative; overflow: hidden; background: #000;
         }
 
-        .gallery-stage {
-            position: relative; width: 100%; height: 75vh; min-height: 500px;
-            background: #000; overflow: hidden;
+        /* 模糊背景层 */
+        .bg-layer {
+            position: absolute; inset: 0; z-index: 0;
+            background-size: cover; background-position: center;
+            filter: blur(40px) brightness(0.35);
+            transform: scale(1.15);
+            transition: background-image 0.8s ease;
         }
-        .gallery-slide {
-            position: absolute; inset: 0; opacity: 0; transition: opacity 1.2s ease;
+
+        /* 前景清晰图 */
+        .slide {
+            position: absolute; inset: 0; z-index: 1; opacity: 0;
+            padding: 36px 12.5%;
             display: flex; align-items: center; justify-content: center;
+            will-change: opacity, transform;
         }
-        .gallery-slide.active { opacity: 1; }
-        .gallery-slide img {
-            width: 100%; height: 100%; object-fit: contain;
-            animation: kenBurns 8s ease-in-out infinite alternate;
+        .slide.active { opacity: 1; transform: scale(1); z-index: 2; }
+
+        /* 画框 */
+        .frame-wrap {
+            display: inline-flex; align-items: center;
+            justify-content: center;
+            /* 卡纸衬底 */
+            background: #f5f0e8;
+            border-radius: 6px;
+            padding: 14px 14px 42px 14px;
+            box-shadow:
+                0 1px 0 rgba(255,255,255,0.5) inset,
+                0 0 0 1px rgba(0,0,0,0.08),
+                0 0 0 4px #f5f0e8,
+                0 0 0 5px rgba(0,0,0,0.06),
+                0 0 0 9px #2a2520,
+                0 0 0 10px rgba(0,0,0,0.15),
+                0 8px 32px rgba(0,0,0,0.4);
         }
-        @keyframes kenBurns {
-            0% { transform: scale(1); }
-            100% { transform: scale(1.06); }
+
+        .slide img, .slide video {
+            min-width: 60vw; min-height: 40vh;
+            max-width: 70vw; max-height: 75vh;
+            object-fit: fill;
+            cursor: pointer; display: block;
+            border-radius: 2px;
         }
-        .gallery-slide .slide-caption {
+
+        /* 底部渐变 + 文字 */
+        .caption {
             position: absolute; bottom: 0; left: 0; right: 0;
-            padding: 60px 40px 32px;
-            background: linear-gradient(to top, rgba(0,0,0,0.85), transparent);
-            text-align: center;
+            padding: 60px 40px 24px; z-index: 3; pointer-events: none;
+            background: linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 100%);
         }
-        .slide-caption .cap-title {
-            font-family: var(--font-serif); font-size: 22px;
-            color: var(--primary-glow); margin-bottom: 4px;
+        .caption .title {
+            font-family: 'Georgia', serif; font-size: 20px;
+            color: #e8d5c0; letter-spacing: 2px; font-weight: normal;
+            text-shadow: 0 2px 6px rgba(0,0,0,0.5);
         }
-        .slide-caption .cap-desc { font-size: 13px; color: rgba(255,255,255,0.6); }
-
-        /* 进度条 */
-        .progress-bar {
-            position: absolute; bottom: 0; left: 0; height: 2px;
-            background: var(--primary); z-index: 5; transition: width 0.1s linear;
+        .caption .meta {
+            font-size: 11px; color: rgba(232,213,192,0.4);
+            letter-spacing: 1px; margin-top: 2px;
         }
 
-        /* 侧边按钮 */
-        .gallery-arrow {
-            position: absolute; top: 50%; transform: translateY(-50%); z-index: 10;
-            width: 44px; height: 44px; border-radius: 50%; border: none;
-            background: rgba(20,20,35,0.6); backdrop-filter: blur(8px);
-            color: var(--primary-glow); font-size: 20px; cursor: pointer;
-            transition: all 0.3s; display: flex; align-items: center; justify-content: center;
-        }
-        .gallery-arrow:hover { background: rgba(201,169,110,0.3); }
-        .gallery-arrow.prev { left: 20px; }
-        .gallery-arrow.next { right: 20px; }
-
-        /* 缩略图 */
-        .thumb-strip {
-            display: flex; gap: 8px; justify-content: center; padding: 14px 20px;
-            overflow-x: auto; -webkit-overflow-scrolling: touch;
-            background: rgba(10,10,15,0.5);
-        }
-        .thumb-strip img {
-            width: 56px; height: 38px; object-fit: cover; border-radius: 6px;
-            cursor: pointer; opacity: 0.4; transition: all 0.3s;
-            border: 2px solid transparent; flex-shrink: 0;
-        }
-        .thumb-strip img.active { opacity: 1; border-color: var(--primary); }
-        .thumb-strip img:hover { opacity: 0.8; }
-
-        .counter {
-            position: absolute; top: 20px; right: 28px; z-index: 5;
-            font-size: 13px; color: rgba(255,255,255,0.5);
-            letter-spacing: 2px;
-        }
-
-        .full-lightbox {
-            position: fixed; inset: 0; z-index: 99999;
-            background: rgba(0,0,0,0.96);
+        /* 毛玻璃箭头 */
+        .arrow {
+            position: absolute; top: 50%; z-index: 5; transform: translateY(-50%);
+            width: 48px; height: 48px; border-radius: 50%; border: none;
+            background: rgba(40,38,35,0.4); backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            color: rgba(232,213,192,0.45); font-size: 18px; cursor: pointer;
             display: flex; align-items: center; justify-content: center;
-            opacity: 0; visibility: hidden; transition: all 0.4s;
+            transition: all 0.4s; opacity: 0;
         }
-        .full-lightbox.open { opacity: 1; visibility: visible; }
-        .full-lightbox img {
-            max-width: 92vw; max-height: 85vh; border-radius: 12px;
-            transform: scale(0.9); transition: transform 0.4s;
-        }
-        .full-lightbox.open img { transform: scale(1); }
-        .lightbox-close {
-            position: absolute; top: 24px; right: 36px; color: #fff;
-            font-size: 36px; cursor: pointer; opacity: 0.5; z-index: 2;
-        }
-        .lightbox-close:hover { opacity: 1; }
+        .screen:hover .arrow { opacity: 1; }
+        .arrow:hover { background: rgba(40,38,35,0.7); color: #e8d5c0; }
+        .arrow.prev { left: 16px; }
+        .arrow.next { right: 16px; }
 
-        @media (max-width: 600px) {
-            .gallery-stage { height: 55vh; min-height: 380px; }
-            .gallery-arrow { width: 36px; height: 36px; font-size: 16px; }
-            .gallery-arrow.prev { left: 8px; }
-            .gallery-arrow.next { right: 8px; }
-            .slide-caption .cap-title { font-size: 17px; }
-            .thumb-strip img { width: 44px; height: 30px; }
+        /* 缩略图栏 — 自动隐藏 */
+        .thumb-zone {
+            position: fixed; bottom: 0; left: 0; right: 0; z-index: 10;
+            height: 96px;
+        }
+        .thumb-panel {
+            position: absolute; bottom: 0; left: 0; right: 0;
+            background: rgba(15,15,15,0.9); backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-top: 1px solid rgba(255,255,255,0.04);
+            padding: 10px 16px; display: flex; gap: 6px;
+            overflow-x: auto; align-items: center;
+            height: 78px;
+            transform: translateY(100%);
+            transition: transform 0.4s cubic-bezier(0.4,0,0.2,1);
+            scrollbar-width: thin;
+        }
+        .thumb-zone:hover .thumb-panel,
+        .thumb-zone.pinned .thumb-panel { transform: translateY(0); }
+
+        .thumb-panel::-webkit-scrollbar { height: 3px; }
+        .thumb-panel::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.06); border-radius: 2px; }
+        .thumb-panel img {
+            height: 56px; width: 88px; object-fit: cover; border-radius: 3px;
+            cursor: pointer; opacity: 0.28; transition: all 0.3s;
+            flex-shrink: 0; border: 2px solid transparent;
+        }
+        .thumb-panel img.active,
+        .thumb-panel .thumb-vid video.active { opacity: 1 !important; border-color: #d4a574 !important; }
+        .thumb-panel img:hover,
+        .thumb-panel .thumb-vid video:hover { opacity: 0.7; }
+
+        /* 灯箱 */
+        .lightbox {
+            position: fixed; inset: 0; z-index: 9999;
+            background: rgba(0,0,0,0.97); display: flex; align-items: center;
+            justify-content: center; opacity: 0; visibility: hidden;
+            transition: 0.35s; cursor: pointer;
+        }
+        .lightbox.open { opacity: 1; visibility: visible; }
+        .lightbox img {
+            max-width: 95vw; max-height: 93vh; object-fit: contain;
+            transition: transform 0.35s; transform: scale(0.93);
+        }
+        .lightbox.open img { transform: scale(1); }
+        .lightbox .close {
+            position: absolute; top: 20px; right: 28px;
+            color: rgba(255,255,255,0.4); font-size: 28px;
+            background: none; border: none; cursor: pointer;
+        }
+        .lightbox .close:hover { color: #fff; }
+
+        @media (max-width: 640px) {
+            .slide { padding: 24px 3%; }
+            .frame-wrap { padding: 10px 10px 32px 10px; box-shadow: 0 1px 0 rgba(255,255,255,0.5) inset, 0 0 0 1px rgba(0,0,0,0.08), 0 0 0 3px #f5f0e8, 0 0 0 4px rgba(0,0,0,0.06), 0 0 0 7px #2a2520, 0 0 0 8px rgba(0,0,0,0.15), 0 6px 20px rgba(0,0,0,0.4); }
+            .caption { padding: 48px 28px 18px; }
+            .caption .title { font-size: 16px; }
+            .arrow { width: 36px; height: 36px; font-size: 14px; opacity: 1; }
+            .arrow.prev { left: 4px; } .arrow.next { right: 4px; }
+            .thumb-panel { height: 64px; padding: 8px 10px; }
+            .thumb-panel img { height: 42px; width: 64px; }
         }
     </style>
 </head>
 <body>
 
-<div class="main">
-    <h1 class="page-title" style="margin-bottom:8px;">记忆相册</h1>
-    <p class="page-subtitle" style="margin-bottom:20px;">每一帧都是最美的时光</p>
-
-    <div class="gallery-stage" id="stage">
-        <span class="counter" id="counter">1 / 1</span>
+<div class="stage">
+    <div class="screen" id="screen">
+        <div class="bg-layer" id="bgLayer"></div>
         <div id="slidesContainer"></div>
-        <div class="progress-bar" id="progressBar"></div>
-        <button class="gallery-arrow prev" onclick="prevSlide()">&#10094;</button>
-        <button class="gallery-arrow next" onclick="nextSlide()">&#10095;</button>
+
+        <div class="caption">
+            <div class="title" id="capTitle"></div>
+            <div class="meta" id="capMeta"></div>
+        </div>
+
+        <button class="arrow prev" onclick="prev()">&#10094;</button>
+        <button class="arrow next" onclick="next()">&#10095;</button>
     </div>
-    <div class="thumb-strip" id="thumbStrip"></div>
 </div>
 
-<div class="full-lightbox" id="lightbox" onclick="closeLightbox()">
-    <span class="lightbox-close">&times;</span>
-    <img id="lightboxImg" src="" alt="">
+<div class="thumb-zone" id="thumbZone">
+    <div class="thumb-panel" id="thumbPanel"></div>
+</div>
+
+<div class="lightbox" id="lightbox" onclick="closeLb()">
+    <button class="close">&times;</button>
+    <img id="lbImg" src="" alt="">
 </div>
 
 <script src="../js/main.js"></script>
 <script>
-// 每张照片的标题和描述，按 data/gallery.json 中的顺序
 var captions = [
-    { title: '记忆相片', desc: '' },
-    { title: '记忆相片', desc: '' },
-    { title: '记忆相片', desc: '' },
-    { title: '记忆相片', desc: '' },
-    { title: '记忆相片', desc: '' },
-    { title: '记忆相片', desc: '' },
-    { title: '记忆相片', desc: '' },
-    { title: '记忆相片', desc: '' },
-    { title: '记忆相片', desc: '' },
-    { title: '记忆相片', desc: '' },
-    { title: '记忆相片', desc: '' },
-    { title: '记忆相片', desc: '' },
-    { title: '记忆相片', desc: '' },
-    { title: '记忆相片', desc: '' },
-    { title: '记忆相片', desc: '' },
-    { title: '记忆相片', desc: '' },
-    { title: '记忆相片', desc: '' },
-    { title: '记忆相片', desc: '' },
-    { title: '记忆相片', desc: '' },
-    { title: '记忆相片', desc: '' }
+    { title:'记忆相片', meta:'' },{ title:'记忆相片', meta:'' },{ title:'记忆相片', meta:'' },
+    { title:'记忆相片', meta:'' },{ title:'记忆相片', meta:'' },{ title:'记忆相片', meta:'' },
+    { title:'记忆相片', meta:'' },{ title:'记忆相片', meta:'' },{ title:'记忆相片', meta:'' },
+    { title:'记忆相片', meta:'' },{ title:'记忆相片', meta:'' },{ title:'记忆相片', meta:'' },
+    { title:'记忆相片', meta:'' },{ title:'记忆相片', meta:'' },{ title:'记忆相片', meta:'' },
+    { title:'记忆相片', meta:'' },{ title:'记忆相片', meta:'' },{ title:'记忆相片', meta:'' },
+    { title:'记忆相片', meta:'' },{ title:'记忆相片', meta:'' }
 ];
 
-var current = 0;
-var total = 0;
-var progressTimer;
-var autoplayTimer;
-var AUTOPLAY_MS = 5000;
+var cur = 0, len = 0, running = true, timer, hideTimer, allFiles = [];
+var DUR = 3000;
 
-function buildGallery(files) {
-    total = files.length;
-    if (total === 0) {
-        document.getElementById('slidesContainer').innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text-muted);font-size:14px;">请将照片放入 images/gallery/ 文件夹 ✦</div>';
+// 随机过渡样式
+var transitions = ['zoom', 'fade', 'slideUp', 'blurFade', 'rotateIn'];
+var curTrans;
+
+function randomTrans() {
+    var styles = [
+        // zoom: 缩放
+        { enter: 'scale(1.15)', leave: 'scale(0.9)', leaveBlur: 'blur(2px)' },
+        // fade: 纯淡入淡出
+        { enter: 'scale(1)', leave: 'scale(1)', leaveBlur: 'none' },
+        // slideUp: 从下方滑入
+        { enter: 'translateY(8%) scale(1)', leave: 'translateY(-4%) scale(0.96)', leaveBlur: 'blur(3px)' },
+        // blurFade: 模糊渐清
+        { enter: 'scale(1.06)', leave: 'scale(0.94)', leaveBlur: 'blur(6px)' },
+        // rotateIn: 轻微旋转
+        { enter: 'rotate(-2deg) scale(1.1)', leave: 'rotate(1deg) scale(0.92)', leaveBlur: 'blur(2px)' }
+    ];
+    var idx = Math.floor(Math.random() * styles.length);
+    curTrans = styles[idx];
+    return styles[idx];
+}
+
+function build(files) {
+    len = files.length; allFiles = files;
+    if (!len) {
+        document.getElementById('slidesContainer').innerHTML =
+            '<div class="slide active" style="display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.12);">放入 images/gallery/</div>';
         return;
     }
-
-    var slidesHtml = '';
-    var thumbsHtml = '';
-    files.forEach(function(file, i) {
-        var cap = captions[i] || { title: '记忆相片', desc: '' };
-        var src = '../images/gallery/' + file;
-        slidesHtml +=
-            '<div class="gallery-slide' + (i === 0 ? ' active' : '') + '">' +
-            '<img src="' + src + '" alt="" onclick="openLightbox(this.src)">' +
-            '<div class="slide-caption"><div class="cap-title">' + cap.title + '</div>' +
-            '<div class="cap-desc">' + cap.desc + '</div></div></div>';
-        thumbsHtml += '<img src="' + src + '" alt="" class="' + (i === 0 ? 'active' : '') +
-            '" onclick="goToSlide(' + i + ')">';
-    });
-
-    document.getElementById('slidesContainer').innerHTML = slidesHtml;
-    document.getElementById('thumbStrip').innerHTML = thumbsHtml;
-    document.getElementById('counter').textContent = '1 / ' + total;
-    startAutoplay();
-}
-
-function goToSlide(n) {
-    n = (n + total) % total;
-    var slides = document.querySelectorAll('.gallery-slide');
-    slides[current].classList.remove('active');
-    slides[n].classList.add('active');
-
-    var thumbs = document.querySelectorAll('.thumb-strip img');
-    if (thumbs[current]) thumbs[current].classList.remove('active');
-    if (thumbs[n]) thumbs[n].classList.add('active');
-
-    current = n;
-    document.getElementById('counter').textContent = (n + 1) + ' / ' + total;
-    resetAutoplay();
-}
-
-function nextSlide() { goToSlide(current + 1); }
-function prevSlide() { goToSlide(current - 1); }
-
-function resetAutoplay() {
-    clearInterval(autoplayTimer);
-    clearInterval(progressTimer);
-    var bar = document.getElementById('progressBar');
-    bar.style.transition = 'none';
-    bar.style.width = '0%';
-
-    var start = Date.now();
-    progressTimer = setInterval(function() {
-        var pct = ((Date.now() - start) / AUTOPLAY_MS) * 100;
-        if (pct >= 100) {
-            pct = 100;
-            clearInterval(progressTimer);
+    var sh = '', th = '';
+    files.forEach(function(f, i) {
+        var s = '../images/gallery/' + f;
+        var isVideo = f.endsWith('.mp4') || f.endsWith('.webm') || f.endsWith('.mov');
+        var mediaEl;
+        if (isVideo) {
+            mediaEl = '<video src="' + s + '" muted loop playsinline autoplay'
+                + ' style="width:100%;height:100%;object-fit:contain;cursor:pointer;"'
+                + ' onclick="event.stopPropagation();openLb(this.src)"></video>';
+        } else {
+            mediaEl = '<img src="' + s + '" alt="" onclick="openLb(this.src)">';
         }
-        bar.style.width = pct + '%';
-    }, 50);
+        sh += '<div class="slide' + (i===0?' active':'') + '" id="s' + i + '"><div class="frame-wrap">' + mediaEl + '</div></div>';
 
-    autoplayTimer = setTimeout(function() { nextSlide(); }, AUTOPLAY_MS);
+        // 缩略图：视频用 poster 或首帧
+        if (isVideo) {
+            th += '<div class="thumb-vid" style="position:relative;flex-shrink:0;cursor:pointer;" onclick="go(' + i + ')">'
+                + '<video src="' + s + '" muted preload="metadata"'
+                + ' style="height:56px;width:88px;object-fit:cover;border-radius:3px;opacity:0.28;'
+                + 'transition:all 0.3s;border:2px solid transparent;'
+                + '" class="' + (i===0?' active':'') + '" id="thumb' + i + '"></video>'
+                + '<span style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);'
+                + 'font-size:20px;pointer-events:none;opacity:0.7;">▶</span></div>';
+        } else {
+            th += '<img src="' + s + '" class="' + (i===0?' active':'') + '" onclick="go(' + i + ')">';
+        }
+    });
+    document.getElementById('slidesContainer').innerHTML = sh;
+    document.getElementById('thumbPanel').innerHTML = th;
+    // 初始背景
+    document.getElementById('bgLayer').style.backgroundImage = 'url(' + '../images/gallery/' + files[0] + ')';
+    setInfo(0);
+    run();
 }
 
+function setInfo(i) {
+    var c = captions[i] || { title:'记忆相片', meta:'' };
+    document.getElementById('capTitle').textContent = c.title;
+    document.getElementById('capMeta').textContent = c.meta;
+}
+
+function go(n) {
+    n = (n + len) % len;
+    var old = document.getElementById('s' + cur);
+    var nu = document.getElementById('s' + n);
+    var t = randomTrans();
+
+    // 背景切换（视频不换背景）
+    var nextFile = allFiles[n];
+    if (!nextFile.endsWith('.mp4') && !nextFile.endsWith('.webm') && !nextFile.endsWith('.mov')) {
+        document.getElementById('bgLayer').style.backgroundImage =
+            'url(' + '../images/gallery/' + nextFile + ')';
+    }
+
+    // 设置新图初始状态
+    nu.style.transition = 'none';
+    nu.style.transform = t.enter;
+    nu.style.opacity = '0';
+    nu.style.filter = 'none';
+
+    // 旧图退出
+    old.style.transition = 'opacity 0.5s ease-in, transform 0.6s ease-in, filter 0.5s ease-in';
+    old.style.transform = t.leave;
+    old.style.opacity = '0';
+    if (t.leaveBlur !== 'none') old.style.filter = t.leaveBlur;
+
+    setTimeout(function() {
+        old.classList.remove('active');
+        old.style.transform = ''; old.style.opacity = ''; old.style.filter = '';
+
+        nu.classList.add('active');
+        nu.style.transition = 'opacity 0.6s cubic-bezier(0.4,0,0.2,1), transform 0.8s cubic-bezier(0.25,0.1,0.25,1)';
+        nu.style.transform = 'scale(1)';
+        nu.style.opacity = '1';
+        nu.style.filter = 'none';
+    }, 60);
+
+    var ts = document.querySelectorAll('.thumb-panel img, .thumb-panel .thumb-vid video');
+    if (ts[cur]) ts[cur].classList.remove('active');
+    if (ts[n]) { ts[n].classList.add('active'); ts[n].scrollIntoView({ behavior:'smooth', block:'nearest', inline:'center' }); }
+
+    cur = n; setInfo(n);
+    showThumbs();
+    run();
+}
+
+function next() { go(cur + 1); }
+function prev() { go(cur - 1); }
+
+function run() {
+    clearTimeout(timer);
+    if (running) timer = setTimeout(next, DUR);
+}
+
+// 缩略图自动隐藏
+function showThumbs() {
+    var zone = document.getElementById('thumbZone');
+    zone.classList.add('pinned');
+    clearTimeout(hideTimer);
+    hideTimer = setTimeout(function() { zone.classList.remove('pinned'); }, 3000);
+}
+
+document.getElementById('thumbZone').addEventListener('mouseenter', function() {
+    this.classList.add('pinned'); clearTimeout(hideTimer);
+});
+document.getElementById('thumbZone').addEventListener('mouseleave', function() {
+    hideTimer = setTimeout(function() {
+        document.getElementById('thumbZone').classList.remove('pinned');
+    }, 800);
+});
+
+// 悬停暂停
+document.getElementById('screen').addEventListener('mouseenter', function() {
+    running = false; clearTimeout(timer);
+});
+document.getElementById('screen').addEventListener('mouseleave', function() {
+    running = true; run();
+});
+
+// 键盘
 document.addEventListener('keydown', function(e) {
-    if (e.key === 'ArrowRight') nextSlide();
-    if (e.key === 'ArrowLeft') prevSlide();
-    if (e.key === 'Escape') closeLightbox();
+    if (e.key === 'ArrowRight') next();
+    else if (e.key === 'ArrowLeft') prev();
+    else if (e.key === ' ') { e.preventDefault(); running = !running; run(); }
+    else if (e.key === 'Escape') closeLb();
 });
 
-var touchStartX = 0;
-document.getElementById('stage').addEventListener('touchstart', function(e) { touchStartX = e.touches[0].clientX; });
-document.getElementById('stage').addEventListener('touchend', function(e) {
-    var diff = e.changedTouches[0].clientX - touchStartX;
-    if (Math.abs(diff) > 50) { diff > 0 ? prevSlide() : nextSlide(); }
+// 触控
+var tx = 0;
+document.getElementById('screen').addEventListener('touchstart', function(e) { tx = e.touches[0].clientX; });
+document.getElementById('screen').addEventListener('touchend', function(e) {
+    if (Math.abs(e.changedTouches[0].clientX - tx) > 50)
+        e.changedTouches[0].clientX > tx ? prev() : next();
 });
 
-function openLightbox(src) {
-    document.getElementById('lightboxImg').src = src;
-    document.getElementById('lightbox').classList.add('open');
+function openLb(s) {
+    var lb = document.getElementById('lightbox');
+    var isVid = s.endsWith('.mp4') || s.endsWith('.webm') || s.endsWith('.mov');
+    if (isVid) {
+        document.getElementById('lbImg').style.display = 'none';
+        var v = document.getElementById('lbVideo');
+        if (!v) {
+            v = document.createElement('video');
+            v.id = 'lbVideo'; v.controls = true; v.autoplay = true;
+            v.style.maxWidth = '95vw'; v.style.maxHeight = '93vh';
+            v.style.objectFit = 'contain'; v.style.borderRadius = '4px';
+            v.style.transition = 'transform 0.35s'; v.style.transform = 'scale(0.93)';
+            v.addEventListener('click', function(e) { e.stopPropagation(); });
+            lb.appendChild(v);
+        }
+        v.src = s;
+        v.style.display = '';
+        lb.classList.add('open');
+        setTimeout(function() { v.style.transform = 'scale(1)'; }, 50);
+    } else {
+        var vi = document.getElementById('lbVideo'); if (vi) { vi.style.display = 'none'; vi.pause(); }
+        document.getElementById('lbImg').style.display = '';
+        document.getElementById('lbImg').src = s;
+        lb.classList.add('open');
+    }
 }
-function closeLightbox() {
-    document.getElementById('lightbox').classList.remove('open');
+function closeLb() {
+    var lb = document.getElementById('lightbox');
+    lb.classList.remove('open');
+    document.getElementById('lbImg').style.transform = 'scale(0.93)';
+    var v = document.getElementById('lbVideo');
+    if (v) { v.style.transform = 'scale(0.93)'; v.pause(); }
 }
 
-fetch('../data/gallery.json').then(function(r) { return r.json(); }).then(buildGallery);
+fetch('../data/gallery.json').then(function(r) { return r.json(); }).then(build);
 </script>
 </body>
 </html>

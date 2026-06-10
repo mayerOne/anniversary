@@ -33,7 +33,7 @@ function initNav(title) {
         { label: '照片墙', href: BASE + '/pages/gallery.html' },
         { label: '足迹', href: BASE + '/pages/map.html' },
         { label: '情书', href: BASE + '/pages/letters.html' },
-        { label: '老虎机', href: BASE + '/pages/scratch.html' }
+        { label: '大转盘', href: BASE + '/pages/scratch.html' }
     ];
 
     // Fix: if BASE is empty (at root), remove leading / to make relative
@@ -45,7 +45,7 @@ function initNav(title) {
             { label: '照片墙', href: './pages/gallery.html' },
             { label: '足迹', href: './pages/map.html' },
             { label: '情书', href: './pages/letters.html' },
-            { label: '老虎机', href: './pages/scratch.html' }
+            { label: '大转盘', href: './pages/scratch.html' }
         ];
     }
 

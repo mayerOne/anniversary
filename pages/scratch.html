@@ -3,241 +3,276 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>老虎机 — 惊喜大奖</title>
+    <title>幸运抽奖</title>
     <link rel="stylesheet" href="../css/style.css">
     <style>
-        .main { max-width: 560px; }
-        body { background: radial-gradient(ellipse at 50% 0%, #1a1a2e 0%, #0a0a0f 60%, #000 100%); }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { background:#f8f4ed; }
+        .main { max-width:560px; margin:0 auto; padding:72px 12px 40px; }
 
-        .slot-machine {
-            background: linear-gradient(180deg, rgba(201,169,110,0.12), rgba(201,169,110,0.04));
-            border: 1px solid rgba(201,169,110,0.25);
-            border-radius: 24px; padding: 36px 28px 28px;
-            box-shadow: 0 12px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(201,169,110,0.1) inset;
-            max-width: 480px; margin: 0 auto;
-        }
+        .title { text-align:center; margin-bottom:24px; }
+        .title h1 { font-family:'Georgia',serif; font-size:28px; color:#3d3029; letter-spacing:2px; font-weight:normal; }
+        .title p { font-size:12px; color:#9b8c7e; margin-top:4px; }
 
-        .slot-top {
-            text-align: center; margin-bottom: 20px;
-        }
-        .slot-top .jackpot {
-            font-size: 12px; color: var(--text-muted); letter-spacing: 3px;
-            margin-bottom: 4px; text-transform: uppercase;
-        }
-        .slot-top .jackpot-val {
-            font-family: var(--font-serif); font-size: 32px; color: var(--primary-glow);
-            text-shadow: 0 0 20px rgba(201,169,110,0.4);
+        /* 矩形框 — 4列3行 Grid */
+        .frame {
+            display:grid;
+            grid-template-columns: 1fr 1fr 1fr 1fr;
+            grid-template-rows: auto auto auto;
+            gap:10px; max-width:400px; margin:0 auto;
+            justify-items:center;
         }
 
-        .reels {
-            display: flex; gap: 12px; justify-content: center; margin-bottom: 24px;
+        .prize-card {
+            width:80px; height:80px; border-radius:14px;
+            background:#fff; border:2px solid #e8e0d5;
+            display:flex; flex-direction:column;
+            align-items:center; justify-content:center;
+            transition: all 0.08s; position:relative;
+            flex-shrink:0;
         }
-        .reel-window {
-            width: 120px; height: 140px;
-            background: rgba(0,0,0,0.5); border-radius: 16px;
-            overflow: hidden; position: relative;
-            border: 2px solid rgba(201,169,110,0.3);
-            box-shadow: 0 0 0 4px rgba(0,0,0,0.4), 0 0 30px rgba(201,169,110,0.1) inset;
-        }
-        .reel-window::before, .reel-window::after {
-            content: ''; position: absolute; left: 0; right: 0; height: 40px; z-index: 2; pointer-events: none;
-        }
-        .reel-window::before { top: 0; background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent); }
-        .reel-window::after { bottom: 0; background: linear-gradient(to top, rgba(0,0,0,0.8), transparent); }
+        .prize-card .icon { font-size:24px; }
+        .prize-card .name { font-size:10px; color:#9b8c7e; margin-top:3px; text-align:center; line-height:1.2; }
 
-        .reel-strip {
-            transition: transform 0.3s cubic-bezier(0.1, 0.6, 0.3, 1);
-            will-change: transform;
-        }
-        .reel-strip .item {
-            height: 70px; display: flex; flex-direction: column;
-            align-items: center; justify-content: center;
-            font-size: 36px; line-height: 1;
-        }
-        .reel-strip .item .name {
-            font-size: 10px; color: var(--text-muted); margin-top: 2px;
+        .prize-card.mystery .icon,
+        .prize-card.mystery .name { visibility:hidden; }
+        .prize-card.mystery::after {
+            content:'?'; font-family:'Georgia',serif;
+            font-size:30px; color:#d4c8b8; position:absolute;
+            inset:0; display:flex; align-items:center;
+            justify-content:center;
         }
 
-        /* 高亮线 */
-        .reel-window .win-line {
-            position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-50%);
-            height: 70px; border-top: 1px dashed rgba(201,169,110,0.3);
-            border-bottom: 1px dashed rgba(201,169,110,0.3);
-            pointer-events: none; z-index: 1;
+        .prize-card.highlight {
+            border-color:#c1785c; background:#fdf4ec;
+            box-shadow:0 0 20px rgba(193,120,92,0.5), 0 0 0 4px rgba(193,120,92,0.12);
+            transform:scale(1.1); z-index:2;
         }
 
-        .slot-result {
-            text-align: center; min-height: 48px; margin-bottom: 16px;
-        }
-        .slot-result .prize-title {
-            font-family: var(--font-serif); font-size: 20px; color: var(--primary-glow);
-        }
-        .slot-result .prize-text { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
+        .prize-card.revealed { border-color:#c1785c; background:#fdf4ec; }
+        .prize-card.revealed::after { display:none; }
+        .prize-card.revealed .icon { visibility:visible; animation:pop 0.4s ease; }
+        .prize-card.revealed .name { visibility:visible; color:#c1785c; font-weight:600; }
 
+        /* 已抽中标记 */
+        .prize-card.won { opacity:0.55; border-color:#d4c8b8; background:#f8f4ed; }
+        .prize-card.won .icon { visibility:visible; opacity:0.6; }
+        .prize-card.won .name { visibility:visible; color:#9b8c7e; font-weight:normal; }
+        .prize-card.won::after {
+            content:'✓'; font-size:18px; color:#9b8c7e;
+            position:absolute; top:-2px; right:-2px;
+            background:#f8f4ed; border-radius:50%;
+            width:20px; height:20px; display:flex;
+            align-items:center; justify-content:center;
+            border:1px solid #d4c8b8;
+        }
+
+        @keyframes pop { 0%{transform:scale(0)} 60%{transform:scale(1.3)} 100%{transform:scale(1)} }
+
+        .controls { text-align:center; margin-top:18px; }
         .spin-btn {
-            display: block; margin: 0 auto; padding: 16px 56px;
-            border: none; border-radius: 50px; cursor: pointer;
-            font-size: 20px; letter-spacing: 4px; font-family: var(--font-sans);
-            background: linear-gradient(135deg, var(--primary) 0%, #a0844e 100%);
-            color: #fff; box-shadow: 0 8px 32px rgba(201,169,110,0.35);
-            transition: all 0.3s;
+            padding:14px 40px; border:none; border-radius:50px;
+            font-size:16px; cursor:pointer; letter-spacing:3px;
+            background:#c1785c; color:#fff;
+            box-shadow:0 4px 16px rgba(193,120,92,0.2);
+            transition:all 0.2s;
         }
-        .spin-btn:hover { transform: translateY(-2px); box-shadow: 0 14px 48px rgba(201,169,110,0.5); }
-        .spin-btn:active { transform: scale(0.95); }
-        .spin-btn:disabled { opacity: 0.5; cursor: not-allowed; pointer-events: none; }
+        .spin-btn:hover { box-shadow:0 6px 24px rgba(193,120,92,0.3); }
+        .spin-btn:active { transform:scale(0.94); }
+        .spin-btn:disabled { opacity:0.4; pointer-events:none; }
 
-        .win-flash {
-            animation: winGlow 0.6s ease-out;
-        }
-        @keyframes winGlow {
-            0% { box-shadow: 0 0 0 rgba(201,169,110,0), 0 0 0 rgba(201,169,110,0) inset; }
-            50% { box-shadow: 0 0 60px rgba(201,169,110,0.6), 0 0 40px rgba(201,169,110,0.3) inset; }
-            100% { box-shadow: 0 0 0 rgba(201,169,110,0), 0 0 0 rgba(201,169,110,0) inset; }
-        }
+        .win-display { text-align:center; margin-top:10px; display:none; }
+        .win-display.show { display:block; }
+        .win-display .win-icon { font-size:32px; animation:pop 0.5s ease; }
+        .win-display .win-name { font-family:'Georgia',serif; font-size:17px; color:#c1785c; margin-top:2px; }
+        .win-display .win-desc { font-size:12px; color:#9b8c7e; margin-top:2px; }
 
-        .history { margin-top: 24px; text-align: center; }
+        .history { text-align:center; margin-top:10px; }
         .history .badge {
-            display: inline-block; padding: 4px 12px; margin: 3px; border-radius: 12px;
-            font-size: 11px; background: rgba(201,169,110,0.1); color: var(--primary-glow);
-            border: 1px solid rgba(201,169,110,0.2);
+            display:inline-block; padding:3px 10px; margin:2px;
+            border-radius:12px; font-size:10px;
+            background:rgba(193,120,92,0.05); color:#c1785c;
+            border:1px solid rgba(193,120,92,0.1);
         }
 
-        @media (max-width: 500px) {
-            .slot-machine { padding: 24px 12px 20px; }
-            .reel-window { width: 90px; height: 110px; }
-            .reel-strip .item { height: 55px; font-size: 28px; }
-            .reel-window .win-line { height: 55px; }
-            .spin-btn { padding: 14px 40px; font-size: 17px; }
+        @media (max-width:480px) {
+            .prize-card { width:64px; height:64px; border-radius:10px; }
+            .prize-card .icon { font-size:20px; }
+            .prize-card .name { font-size:8px; }
+            .prize-card.mystery::after { font-size:24px; }
+            .frame { gap:6px; }
         }
     </style>
 </head>
 <body>
 
 <div class="main">
-    <h1 class="page-title">幸运老虎机</h1>
-    <p class="page-subtitle">按下按钮，看看今天抽中什么惊喜 ✦</p>
-
-    <div class="slot-machine" id="machine">
-        <div class="slot-top">
-            <div class="jackpot">✦ JACKPOT ✦</div>
-            <div class="jackpot-val" id="jackpot">???</div>
-        </div>
-
-        <div class="reels">
-            <div class="reel-window"><div class="win-line"></div><div class="reel-strip" id="reel0"></div></div>
-            <div class="reel-window"><div class="win-line"></div><div class="reel-strip" id="reel1"></div></div>
-            <div class="reel-window"><div class="win-line"></div><div class="reel-strip" id="reel2"></div></div>
-        </div>
-
-        <div class="slot-result">
-            <div class="prize-title" id="prizeTitle"></div>
-            <div class="prize-text" id="prizeText"></div>
-        </div>
-
-        <button class="spin-btn" id="spinBtn" onclick="spin()">✦ 旋 转 ✦</button>
-
-        <div class="history" id="history"></div>
+    <div class="title">
+        <h1>幸运抽奖</h1>
+        <p>神秘礼物藏在每一格里 ✦</p>
     </div>
+
+    <div class="frame" id="frame"></div>
+
+    <div class="controls">
+        <button class="spin-btn" id="spinBtn" onclick="startDraw()">✦ 抽 奖 ✦</button>
+        <div class="win-display" id="winDisplay">
+            <div class="win-icon" id="winIcon"></div>
+            <div class="win-name" id="winName"></div>
+            <div class="win-desc" id="winDesc"></div>
+        </div>
+    </div>
+
+    <div class="history" id="history"></div>
 </div>
 
 <script src="../js/main.js"></script>
 <script>
 var gifts = [
-    { icon: '💌', title: '情书一封', text: '你是我写不完的故事' },
-    { icon: '💐', title: '一束玫瑰', text: '每一朵都代表想你' },
-    { icon: '🍽️', title: '烛光晚餐', text: '我下厨，你享用' },
-    { icon: '✈️', title: '旅行基金', text: '下一站你想去哪里？' },
-    { icon: '🎬', title: '电影之夜', text: '陪你刷完所有想看的' },
-    { icon: '💆', title: '按摩券', text: '随叫随到，包你满意' },
-    { icon: '🎁', title: '神秘礼物', text: '拆开才知道是什么哦' },
-    { icon: '💤', title: '陪你赖床', text: '周末上午全都是你的' },
-    { icon: '💍', title: '最好的礼物', text: '我的余生，都给你' }
+    { icon:'🧋', title:'奶茶一杯', desc:'冰的常温的？三分糖，和你一样刚刚好' },
+    { icon:'🏅', title:'黄金', desc:'金灿灿的，和你在我心里的分量一样沉甸甸' },
+    { icon:'💐', title:'鲜花一束', desc:'花会谢，但送花给你的理由每天都新鲜' },
+    { icon:'🧧', title:'520红包', desc:'数字不大，心意满满' },
+    { icon:'👘', title:'清凉睡衣', desc:'夏天睡觉也要美美的，这件给你挑好了' },
+    { icon:'🧴', title:'香氛洗发水', desc:'洗完头别动，让我帮你吹，顺便闻闻香不香' },
+    { icon:'🪄', title:'小皮鞭', desc:'……这个礼物有点特别，你懂的' },
+    { icon:'💋', title:'亲亲一个', desc:'随时随地，不限次数' },
+    { icon:'🩴', title:'夏日拖鞋', desc:'踩上去软软的，像踩着云朵过夏天' },
+    { icon:'🔄', title:'再来一次', desc:'运气不错！免费再抽一回' }
 ];
 
-var REEL_COUNT = 3;
-var ITEM_HEIGHT = 70;
-var SPIN_EXTRA = 6;
-var prizeHistory = [];
-var spinning = false;
+var n = gifts.length;
+var history = [];
+var running = false;
+var cards = [];
+var won = []; // 已中奖索引
 
-function getItemHeight() {
-    var item = document.querySelector('.reel-strip .item');
-    return item ? item.offsetHeight : ITEM_HEIGHT;
-}
+// 矩形跑马灯路径（顺时针）
+var path = [0,1,2,3, 4, 5,6,7,8, 9];
 
-function buildReelStrip() {
-    var shuffled = gifts.slice().sort(function() { return Math.random() - 0.5; });
-    var triple = shuffled.concat(shuffled).concat(shuffled);
-    return triple.map(function(g) {
-        return '<div class="item"><span>' + g.icon + '</span><span class="name">' + g.title + '</span></div>';
-    }).join('');
-}
+function buildFrame() {
+    var frame = document.getElementById('frame');
+    frame.innerHTML = '';
+    cards = [];
 
-function initReels() {
-    ITEM_HEIGHT = getItemHeight();
-    for (var i = 0; i < REEL_COUNT; i++) {
-        document.getElementById('reel' + i).innerHTML = buildReelStrip();
-        var offset = Math.floor(Math.random() * gifts.length) * ITEM_HEIGHT + gifts.length * ITEM_HEIGHT;
-        document.getElementById('reel' + i).style.transform = 'translateY(-' + offset + 'px)';
+    function mk(g) {
+        var c = document.createElement('div');
+        c.className = 'prize-card mystery';
+        c.innerHTML = '<span class="icon">' + gifts[g].icon + '</span>'
+            + '<span class="name">' + gifts[g].title + '</span>';
+        cards[g] = c;
+        return c;
     }
+
+    // Grid 4列3行排列:
+    // [0] [1] [2] [3]
+    // [9] [ ] [ ] [4]
+    // [8] [7] [6] [5]
+
+    var positions = [
+        { g:0, r:1, c:1 },{ g:1, r:1, c:2 },{ g:2, r:1, c:3 },{ g:3, r:1, c:4 },
+        { g:9, r:2, c:1 },{ g:4, r:2, c:4 },
+        { g:8, r:3, c:1 },{ g:7, r:3, c:2 },{ g:6, r:3, c:3 },{ g:5, r:3, c:4 }
+    ];
+
+    positions.forEach(function(p) {
+        var c = mk(p.g);
+        c.style.gridRow = p.r;
+        c.style.gridColumn = p.c;
+        frame.appendChild(c);
+    });
 }
 
-function spin() {
-    if (spinning) return;
-    spinning = true;
-    ITEM_HEIGHT = getItemHeight();
+function startDraw() {
+    if (running) return;
+    running = true;
+
+    // 检查是否所有奖项都已抽完
+    var available = [];
+    for (var i = 0; i < n; i++) {
+        if (won.indexOf(i) === -1) available.push(i);
+    }
+    if (available.length === 0) {
+        running = false;
+        document.getElementById('winDisplay').classList.add('show');
+        document.getElementById('winIcon').textContent = '🎉';
+        document.getElementById('winName').textContent = '所有奖项都抽完啦！';
+        document.getElementById('winDesc').textContent = '谢谢你填满了我的整个世界 ✦';
+        return;
+    }
+
     var btn = document.getElementById('spinBtn');
     btn.disabled = true;
-    btn.textContent = '✦ ... ✦';
-    document.getElementById('prizeTitle').textContent = '';
-    document.getElementById('prizeText').textContent = '';
-    document.getElementById('jackpot').textContent = '???';
+    document.getElementById('winDisplay').classList.remove('show');
 
-    var results = [];
-    var maxDelay = 0;
-
-    for (var i = 0; i < REEL_COUNT; i++) {
-        (function(idx) {
-            var resultIdx = Math.floor(Math.random() * gifts.length);
-            results.push(resultIdx);
-            var midCopy = gifts.length * ITEM_HEIGHT;
-            var target = midCopy + resultIdx * ITEM_HEIGHT + gifts.length * SPIN_EXTRA * ITEM_HEIGHT;
-            var duration = 800 + idx * 400;
-            maxDelay = Math.max(maxDelay, duration);
-
-            setTimeout(function() {
-                var reel = document.getElementById('reel' + idx);
-                reel.style.transition = 'transform ' + (0.5 + idx * 0.2) + 's cubic-bezier(0.12, 0.82, 0.28, 1)';
-                reel.style.transform = 'translateY(-' + target + 'px)';
-            }, idx * 200);
-        })(i);
+    // 只重置未中奖的卡片
+    for (var i = 0; i < n; i++) {
+        if (won.indexOf(i) === -1) {
+            cards[i].classList.add('mystery');
+            cards[i].classList.remove('revealed', 'highlight');
+        }
     }
 
-    setTimeout(function() {
-        var prize = gifts[results[0]];
-        document.getElementById('jackpot').textContent = prize.icon;
-        document.getElementById('prizeTitle').textContent = prize.title;
-        document.getElementById('prizeText').textContent = prize.text;
-        document.getElementById('machine').classList.add('win-flash');
-        setTimeout(function() { document.getElementById('machine').classList.remove('win-flash'); }, 600);
+    // 从未中奖的奖项中随机选一个
+    var winIdx = available[Math.floor(Math.random() * available.length)];
+    var laps = 2 + Math.floor(Math.random() * 3); // 2-4圈
+    var totalSteps = laps * n + path.indexOf(winIdx);
+    console.log('winIdx=' + winIdx + ', totalSteps=' + totalSteps);
 
-        prizeHistory.unshift(prize.icon + ' ' + prize.title);
-        if (prizeHistory.length > 8) prizeHistory.pop();
-        renderHistory();
+    var step = 0;
+    var prev = -1;
 
-        btn.textContent = '✦ 再抽一次 ✦';
-        btn.disabled = false;
-        spinning = false;
-    }, maxDelay + 600);
+    function tick() {
+        try {
+            // 清除上一个
+            if (prev >= 0 && cards[prev]) cards[prev].classList.remove('highlight');
+
+            if (step > totalSteps) {
+                // 标记为已中奖
+                won.push(winIdx);
+                // 揭晓
+                if (cards[winIdx]) {
+                    cards[winIdx].classList.add('revealed', 'won');
+                    cards[winIdx].classList.remove('mystery');
+                }
+                var prize = gifts[winIdx];
+                document.getElementById('winIcon').textContent = prize.icon;
+                document.getElementById('winName').textContent = prize.title;
+                document.getElementById('winDesc').textContent = prize.desc;
+                document.getElementById('winDisplay').classList.add('show');
+
+                history.unshift(prize.icon + ' ' + prize.title);
+                if (history.length > 8) history.pop();
+                document.getElementById('history').innerHTML = history.map(function(h) {
+                    return '<span class="badge">' + h + '</span>';
+                }).join('');
+
+                running = false;
+                btn.disabled = false;
+                console.log('done');
+                return;
+            }
+
+            // 高亮当前
+            var curGift = path[step % n];
+            if (cards[curGift]) cards[curGift].classList.add('highlight');
+            prev = curGift;
+            step++;
+
+            var progress = step / totalSteps;
+            var delay = 40 + progress * progress * 320;
+            setTimeout(tick, delay);
+        } catch(e) {
+            console.error(e);
+            running = false;
+            btn.disabled = false;
+        }
+    }
+
+    tick();
 }
 
-function renderHistory() {
-    document.getElementById('history').innerHTML = prizeHistory.map(function(h) {
-        return '<span class="badge">' + h + '</span>';
-    }).join('');
-}
-
-initReels();
+buildFrame();
 </script>
 </body>
 </html>

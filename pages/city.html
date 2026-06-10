@@ -6,140 +6,377 @@
     <title>城市记忆</title>
     <link rel="stylesheet" href="../css/style.css">
     <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
         body {
-            background: radial-gradient(ellipse at 50% 0%, #1a1a2e 0%, #0a0a0f 60%, #000 100%);
-            min-height: 100vh;
+            overflow-x: hidden;
+            font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
         }
-        .main { max-width: 800px; padding-top: 60px; }
+        a { text-decoration:none; }
 
-        .back-link {
-            display: inline-flex; align-items: center; gap: 6px;
-            color: var(--text-muted); font-size: 13px; margin-bottom: 32px;
-            transition: color 0.2s; text-decoration: none;
+        /* === 风格参数 === */
+        /* 麻绳夹子 */
+        .rope-bg  { background: linear-gradient(180deg, #f5efe0 0%, #e8e0d0 40%, #f0e8d8 100%); }
+        .rope-bg .bg-texture {
+            background-image: radial-gradient(circle, rgba(139,119,90,0.06) 1px, transparent 1px);
+            background-size: 4px 4px;
         }
-        .back-link:hover { color: var(--primary-glow); }
-
-        .city-header {
-            text-align: center; margin-bottom: 40px;
+        /* 拍立得堆叠 */
+        .polaroid-bg { background: linear-gradient(135deg, #faf6f0 0%, #f0e6d6 50%, #fdf8f0 100%); }
+        .polaroid-bg .bg-texture {
+            background-image: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.01) 2px, rgba(0,0,0,0.01) 4px);
         }
-        .city-header .icon { font-size: 48px; margin-bottom: 8px; }
-        .city-header h2 {
-            font-family: var(--font-serif); font-size: 28px;
-            color: var(--primary-glow); letter-spacing: 3px;
+        /* 胶片卷轴 */
+        .film-bg { background: linear-gradient(180deg, #2a2220 0%, #1a1412 50%, #241c18 100%); }
+        .film-bg .bg-texture {
+            background-image: radial-gradient(ellipse, rgba(255,255,255,0.02) 1px, transparent 1px);
+            background-size: 3px 6px;
         }
-        .city-header .desc { color: var(--text-muted); font-size: 14px; margin-top: 6px; }
-
-        .photo-grid {
-            columns: 2; column-gap: 12px;
-        }
-        .photo-grid img {
-            width: 100%; border-radius: 12px; margin-bottom: 12px;
-            cursor: pointer; transition: transform 0.3s, box-shadow 0.3s;
-            display: block; break-inside: avoid;
-        }
-        .photo-grid img:hover {
-            transform: scale(1.03);
-            box-shadow: 0 8px 32px rgba(201,169,110,0.2);
+        /* 花窗格 */
+        .window-bg { background: linear-gradient(180deg, #f5efe6 0%, #ede0d0 50%, #f8f0e8 100%); }
+        .window-bg .bg-texture {
+            background-image: repeating-linear-gradient(45deg, transparent, transparent 1px, rgba(139,119,90,0.03) 1px, rgba(139,119,90,0.03) 2px);
         }
 
-        .empty-state {
-            text-align: center; padding: 60px 20px; color: var(--text-muted);
-            font-size: 14px;
+        .bg-texture { position:fixed; inset:0; z-index:0; pointer-events:none; }
+
+        /* === 容器 === */
+        .page { position:relative; z-index:1; max-width:1000px; margin:0 auto; padding:52px 20px 64px; }
+
+        .back {
+            display:inline-flex; align-items:center; gap:5px;
+            font-size:12px; margin-bottom:32px; letter-spacing:1px;
+            transition:color 0.2s;
+        }
+        .rope-bg .back, .polaroid-bg .back, .window-bg .back { color:rgba(61,48,41,0.4); }
+        .rope-bg .back:hover, .polaroid-bg .back:hover, .window-bg .back:hover { color:#c1785c; }
+        .film-bg .back { color:rgba(200,190,180,0.35); }
+        .film-bg .back:hover { color:rgba(200,190,180,0.7); }
+
+        .header { text-align:center; margin-bottom:44px; }
+        .header .emoji { font-size:44px; margin-bottom:6px; }
+        .header h1 { font-family:'Georgia',serif; font-size:26px; letter-spacing:3px; font-weight:normal; }
+        .header .desc { font-size:12px; margin-top:6px; }
+        .rope-bg .header h1, .polaroid-bg .header h1, .window-bg .header h1 { color:#3d3029; }
+        .rope-bg .header .desc, .polaroid-bg .header .desc, .window-bg .header .desc { color:#9b8c7e; }
+        .film-bg .header h1 { color:#e0d6c8; }
+        .film-bg .header .desc { color:rgba(200,190,180,0.4); }
+
+        /* === 麻绳夹子 === */
+        .rope-wall {
+            position:relative; padding:28px 0 40px;
+        }
+        .rope-line {
+            position:relative; margin-bottom:36px;
+        }
+        .rope-line::before {
+            content:''; position:absolute; top:30px; left:-10px; right:-10px;
+            height:3px; background:linear-gradient(90deg, #8b7355 0%, #a0896c 30%, #c4a882 50%, #a0896c 70%, #8b7355 100%);
+            border-radius:2px; z-index:0;
+            box-shadow:0 1px 0 rgba(0,0,0,0.08);
+        }
+        .rope-photos {
+            display:flex; flex-wrap:wrap; gap:12px 18px;
+            justify-content:center; padding:0 12px;
+        }
+        .rope-item {
+            position:relative; z-index:1; cursor:pointer;
+            transition:transform 0.3s;
+        }
+        .rope-item:hover { transform:translateY(-4px) rotate(0deg) !important; z-index:3; }
+        .rope-item img {
+            display:block; border-radius:3px;
+            box-shadow:0 3px 12px rgba(0,0,0,0.15);
+            max-height:240px; width:auto;
+        }
+        /* 木夹子 */
+        .rope-item::before {
+            content:''; position:absolute; top:-10px; left:50%; transform:translateX(-50%);
+            width:16px; height:6px; background:#c4a070;
+            border-radius:3px 3px 0 0; z-index:2;
+            box-shadow:0 1px 2px rgba(0,0,0,0.2);
+        }
+        .rope-item::after {
+            content:''; position:absolute; top:-14px; left:50%; transform:translateX(-50%);
+            width:4px; height:8px; background:#a08060;
+            border-radius:50%; z-index:3;
         }
 
+        /* === 拍立得堆叠 === */
+        .polaroid-stack {
+            position:relative; min-height:500px; padding:20px;
+            display:flex; flex-wrap:wrap; justify-content:center;
+            align-items:flex-start; gap:0;
+        }
+        .polaroid-card {
+            position:relative; background:#fff; padding:10px 10px 36px;
+            box-shadow:0 2px 8px rgba(0,0,0,0.12), 0 1px 0 rgba(0,0,0,0.04);
+            cursor:pointer; transition:all 0.35s;
+            margin:-8px;
+        }
+        .polaroid-card:hover { transform:scale(1.08) rotate(0deg) !important; z-index:10; box-shadow:0 8px 28px rgba(0,0,0,0.2); }
+        .polaroid-card img {
+            display:block; max-width:180px; max-height:200px;
+            width:auto; height:auto;
+        }
+        .polaroid-card .note {
+            position:absolute; bottom:6px; left:10px; right:10px;
+            text-align:center; font-size:9px; color:#9b8c7e;
+            font-family:'Georgia',serif; white-space:nowrap; overflow:hidden;
+        }
+
+        /* === 胶片卷轴 === */
+        .film-strip {
+            padding:32px 0; overflow-x:auto; scrollbar-width:thin;
+            display:flex; gap:0; align-items:center;
+            scroll-snap-type:x mandatory;
+        }
+        .film-strip::-webkit-scrollbar { height:4px; }
+        .film-strip::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.1); border-radius:2px; }
+        .film-frame {
+            flex-shrink:0; scroll-snap-align:center;
+            position:relative; background:#1a1a1a;
+            padding:12px 14px;
+            border-top:3px dashed rgba(255,255,255,0.08);
+            border-bottom:3px dashed rgba(255,255,255,0.08);
+            cursor:pointer; transition:transform 0.3s;
+        }
+        .film-frame:hover { transform:scale(1.04); z-index:2; }
+        .film-frame img {
+            display:block; max-height:320px; width:auto;
+            border-radius:2px;
+        }
+        /* 齿孔 */
+        .film-strip-wrap {
+            position:relative;
+        }
+        .film-strip-wrap::before, .film-strip-wrap::after {
+            content:''; position:absolute; left:0; right:0; height:4px;
+            background:radial-gradient(circle, rgba(255,255,255,0.06) 2px, transparent 2px);
+            background-size:16px 4px; z-index:1; pointer-events:none;
+        }
+        .film-strip-wrap::before { top:0; }
+        .film-strip-wrap::after { bottom:0; }
+
+        /* === 花窗格 === */
+        .window-grid {
+            display:grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap:14px; padding:16px;
+        }
+        .window-pane {
+            position:relative; cursor:pointer; overflow:hidden;
+            border-radius:4px;
+            box-shadow:
+                0 0 0 8px #f0e8d8,
+                0 0 0 10px #d4c4a8,
+                0 0 0 14px #f5efe0,
+                0 4px 16px rgba(0,0,0,0.1);
+            transition:all 0.3s;
+            aspect-ratio:1;
+        }
+        .window-pane:hover { transform:scale(1.04); box-shadow:0 0 0 8px #f0e8d8, 0 0 0 10px #c1785c, 0 0 0 14px #f5efe0, 0 8px 24px rgba(0,0,0,0.15); }
+        .window-pane img {
+            width:100%; height:100%; object-fit:cover;
+        }
+        /* 窗格十字线 */
+        .window-pane::before {
+            content:''; position:absolute; inset:0; z-index:1; pointer-events:none;
+            background:linear-gradient(180deg, transparent 49%, rgba(139,119,90,0.12) 49%, rgba(139,119,90,0.12) 51%, transparent 51%),
+                       linear-gradient(90deg, transparent 49%, rgba(139,119,90,0.12) 49%, rgba(139,119,90,0.12) 51%, transparent 51%);
+        }
+
+        /* === 灯箱 === */
         .lightbox {
-            position: fixed; inset: 0; z-index: 99999;
-            background: rgba(0,0,0,0.96);
-            display: flex; align-items: center; justify-content: center;
-            opacity: 0; visibility: hidden; transition: opacity 0.3s;
+            position:fixed; inset:0; z-index:9999;
+            background:rgba(0,0,0,0.96); display:flex; align-items:center;
+            justify-content:center; opacity:0; visibility:hidden; transition:0.35s;
+            cursor:pointer;
         }
-        .lightbox.open { opacity: 1; visibility: visible; }
+        .lightbox.open { opacity:1; visibility:visible; }
         .lightbox img {
-            max-width: 92vw; max-height: 88vh; border-radius: 8px;
-            transform: scale(0.92); transition: transform 0.3s;
+            max-width:92vw; max-height:90vh; object-fit:contain;
+            transition:transform 0.35s; transform:scale(0.93);
         }
-        .lightbox.open img { transform: scale(1); }
-        .lightbox .close {
-            position: absolute; top: 20px; right: 32px; color: #fff;
-            font-size: 32px; cursor: pointer; opacity: 0.5; z-index: 2;
+        .lightbox.open img { transform:scale(1); }
+        .lightbox .lb-close {
+            position:absolute; top:20px; right:28px;
+            color:rgba(255,255,255,0.4); font-size:28px;
+            background:none; border:none; cursor:pointer;
         }
-        .lightbox .close:hover { opacity: 1; }
+        .lightbox .lb-close:hover { color:#fff; }
 
-        @media (max-width: 500px) {
-            .photo-grid { columns: 1; }
-            .main { padding-top: 50px; padding-left: 12px; padding-right: 12px; }
+        @media (max-width:640px) {
+            .page { padding:40px 10px 48px; }
+            .header h1 { font-size:22px; }
+            .rope-item img { max-height:150px; }
+            .polaroid-card img { max-width:130px; max-height:150px; }
+            .film-frame img { max-height:200px; }
+            .window-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap:10px; }
+            .window-pane { box-shadow:0 0 0 5px #f0e8d8, 0 0 0 7px #d4c4a8, 0 0 0 10px #f5efe0, 0 3px 10px rgba(0,0,0,0.1); }
         }
     </style>
 </head>
-<body>
+<body id="bodyEl">
 
-<div class="main">
-    <a class="back-link" href="map.html">← 返回足迹地图</a>
-    <div class="city-header">
-        <div class="icon" id="cityIcon"></div>
-        <h2 id="cityTitle"></h2>
-        <div class="desc" id="cityDesc"></div>
+<div class="bg-texture"></div>
+
+<div class="page">
+    <a class="back" href="map.html">← 返回足迹</a>
+    <div class="header">
+        <div class="emoji" id="emoji"></div>
+        <h1 id="cityName"></h1>
+        <p class="desc" id="cityDesc"></p>
     </div>
-    <div class="photo-grid" id="photoGrid"></div>
-    <div class="empty-state" id="emptyState" style="display:none;">还没有添加照片 ✦</div>
+    <div id="content"></div>
 </div>
 
-<div class="lightbox" id="lightbox" onclick="closeLightbox()">
-    <span class="close">&times;</span>
-    <img id="lightboxImg" src="" alt="">
+<div class="lightbox" id="lightbox" onclick="closeLb()">
+    <button class="lb-close">&times;</button>
+    <img id="lbImg" src="" alt="">
 </div>
 
 <script src="../js/main.js"></script>
 <script>
+// === 城市数据 ===
 var cities = {
-    shenzhen:   { title: '深圳', desc: '我们相遇相爱的城市，是一切开始的地方。', icon: '🏙️' },
-    shanghai:   { title: '上海', desc: '外滩夜景，南京路漫步，你说这城市太魔幻了。', icon: '🌃' },
-    nanjing:    { title: '南京', desc: '秦淮河畔灯火阑珊，梧桐树下漫步整座城。', icon: '🏛️' },
-    hangzhou:   { title: '杭州', desc: '西湖断桥残雪，雷峰塔下我们许了愿。', icon: '🌊' },
-    suzhou:     { title: '苏州', desc: '拙政园里听评弹，平江路上牵手漫步。', icon: '🏡' },
-    guangzhou:  { title: '广州', desc: '肠粉早茶西关老巷，你说这里是美食天堂。', icon: '🥟' },
-    chongqing:  { title: '重庆', desc: '洪崖洞的夜景像千与千寻，火锅辣到流眼泪。', icon: '🌆' },
-    nanchang:   { title: '南昌', desc: '滕王阁上望赣江，英雄城里走一走。', icon: '🏯' },
-    pingxiang:  { title: '萍乡', desc: '萍水相逢，却是此生最美的意外。', icon: '⛰️' },
-    hengyang:   { title: '衡阳', desc: '衡山脚下，你说要一起看遍世间风景。', icon: '🏔️' },
-    changsha:   { title: '长沙', desc: '橘子洲头烟花绚烂，茶颜悦色一人一杯。', icon: '🎆' },
-    fuzhou:     { title: '福州', desc: '三坊七巷走九遍，鱼丸肉燕吃不够。', icon: '🍜' },
-    pingtan:    { title: '平潭岛', desc: '蓝眼泪划过海岸，像极了爱情的模样。', icon: '🏝️' }
+    shenzhen:  { title:'深圳', desc:'我们相遇相爱的城市，是一切开始的地方。', emoji:'🏙️', style:'polaroid' },
+    shanghai:  { title:'上海', desc:'外滩夜景，南京路漫步，你说这城市太魔幻了。', emoji:'🌃', style:'polaroid' },
+    nanjing:   { title:'南京', desc:'秦淮河畔灯火阑珊，梧桐树下漫步整座城。', emoji:'🏛️', style:'film' },
+    hangzhou:  { title:'杭州', desc:'西湖断桥残雪，雷峰塔下我们许了愿。', emoji:'🌊', style:'rope' },
+    suzhou:    { title:'苏州', desc:'拙政园里听评弹，平江路上牵手漫步。', emoji:'🏡', style:'window' },
+    guangzhou: { title:'广州', desc:'小蛮腰下珠江边，肠粉早茶是我们的日常。', emoji:'🥟', style:'window' },
+    chongqing: { title:'重庆', desc:'洪崖洞的夜景像千与千寻，火锅辣到流眼泪。', emoji:'🌆', style:'polaroid' },
+    nanchang:  { title:'南昌', desc:'滕王阁上望赣江，英雄城里走一走。', emoji:'🏯', style:'window' },
+    pingxiang: { title:'萍乡', desc:'萍水相逢，却是此生最美的意外。', emoji:'⛰️', style:'rope' },
+    hengyang:  { title:'衡阳', desc:'衡山雾凇，冰晶世界里的温暖回忆。', emoji:'🏔️', style:'rope' },
+    changsha:  { title:'长沙', desc:'橘子洲头烟花绚烂，茶颜悦色一人一杯。', emoji:'🎆', style:'polaroid' },
+    fuzhou:    { title:'福州', desc:'三坊七巷走九遍，鱼丸肉燕吃不够。', emoji:'🍜', style:'film' },
+    pingtan:   { title:'平潭岛', desc:'蓝眼泪划过海岸，像极了爱情的模样。', emoji:'🏝️', style:'rope' },
+    qingyuan:  { title:'清远', desc:'北江竹筏漂流，山野间的清凉回忆。', emoji:'🏞️', style:'rope' },
+    xianggang: { title:'香港', desc:'维港霓虹闪烁，和你一起看遍繁华。', emoji:'🌉', style:'polaroid' },
+    changde:   { title:'常德', desc:'大小河街灯火，桃花源里遇见了你。', emoji:'🌸', style:'film' }
 };
 
 var slug = new URLSearchParams(location.search).get('city') || 'shenzhen';
-var city = cities[slug];
+var c = cities[slug] || cities['shenzhen'];
+document.title = c.title + ' — 足迹';
+document.getElementById('emoji').textContent = c.emoji;
+document.getElementById('cityName').textContent = c.title;
+document.getElementById('cityDesc').textContent = c.desc;
 
-if (city) {
-    document.title = city.title + ' — 我们的足迹';
-    document.getElementById('cityIcon').textContent = city.icon;
-    document.getElementById('cityTitle').textContent = city.title;
-    document.getElementById('cityDesc').textContent = city.desc;
-}
+// 设置身体背景类
+var body = document.getElementById('bodyEl');
+var styleMap = {
+    rope: 'rope-bg',
+    polaroid: 'polaroid-bg',
+    film: 'film-bg',
+    window: 'window-bg'
+};
+body.className = styleMap[c.style] || 'rope-bg';
 
-fetch('../data/map.json').then(function(r) { return r.json(); }).then(function(data) {
-    var photos = data[slug] || [];
-    if (!photos.length) {
-        document.getElementById('emptyState').style.display = 'block';
+// === 加载照片 ===
+fetch('../data/map.json').then(function(r){return r.json();}).then(function(data){
+    var files = data[slug] || [];
+    var container = document.getElementById('content');
+
+    if (!files.length) {
+        container.innerHTML = '<div style="text-align:center;padding:60px 20px;font-size:13px;opacity:0.3;">还没有添加照片</div>';
         return;
     }
-    var html = photos.map(function(f) {
-        var src = '../images/map/' + slug + '/' + f;
-        return '<img src="' + src + '" alt="" onclick="openLightbox(this.src)" loading="lazy" onerror="this.style.display=\'none\'">';
-    }).join('');
-    document.getElementById('photoGrid').innerHTML = html;
+
+    switch (c.style) {
+        case 'rope':
+            buildRope(container, files);
+            break;
+        case 'polaroid':
+            buildPolaroid(container, files);
+            break;
+        case 'film':
+            buildFilm(container, files);
+            break;
+        case 'window':
+            buildWindow(container, files);
+            break;
+    }
 });
 
-function openLightbox(src) {
-    document.getElementById('lightboxImg').src = src;
-    document.getElementById('lightbox').classList.add('open');
+// === 麻绳夹子 ===
+function buildRope(ct, files) {
+    var wall = document.createElement('div'); wall.className = 'rope-wall';
+
+    // 每行5-6张，用多条绳
+    var perRow = Math.min(6, Math.ceil(files.length / 2));
+    var rows = [];
+    for (var i = 0; i < files.length; i += perRow) {
+        rows.push(files.slice(i, i + perRow));
+    }
+    if (rows.length === 1 && rows[0].length > 6) {
+        // 重新分配两行
+        var half = Math.ceil(files.length / 2);
+        rows = [files.slice(0, half), files.slice(half)];
+    }
+
+    rows.forEach(function(row) {
+        var line = document.createElement('div'); line.className = 'rope-line';
+        var photos = document.createElement('div'); photos.className = 'rope-photos';
+        row.forEach(function(f, idx) {
+            var item = document.createElement('div'); item.className = 'rope-item';
+            var rot = (Math.random() - 0.5) * 10; // -5° ~ +5°
+            item.style.transform = 'rotate(' + rot + 'deg)';
+            var src = '../images/map/' + slug + '/' + f;
+            item.innerHTML = '<img src="' + src + '" alt="" onclick="openLb(this.src)" loading="lazy" onerror="this.style.display=\'none\'">';
+            photos.appendChild(item);
+        });
+        line.appendChild(photos);
+        wall.appendChild(line);
+    });
+    ct.appendChild(wall);
 }
-function closeLightbox() {
-    document.getElementById('lightbox').classList.remove('open');
+
+// === 拍立得堆叠 ===
+function buildPolaroid(ct, files) {
+    var stack = document.createElement('div'); stack.className = 'polaroid-stack';
+    files.forEach(function(f, idx) {
+        var card = document.createElement('div'); card.className = 'polaroid-card';
+        var rot = (Math.random() - 0.5) * 14;
+        card.style.transform = 'rotate(' + rot + 'deg)';
+        card.style.zIndex = idx;
+        var src = '../images/map/' + slug + '/' + f;
+        card.innerHTML = '<img src="' + src + '" alt="" onclick="openLb(this.src)" loading="lazy" onerror="this.parentElement.style.display=\'none\'">'
+            + '<div class="note">✦ ' + c.title + '</div>';
+        stack.appendChild(card);
+    });
+    ct.appendChild(stack);
 }
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') closeLightbox();
-});
+
+// === 胶片卷轴 ===
+function buildFilm(ct, files) {
+    var wrap = document.createElement('div'); wrap.className = 'film-strip-wrap';
+    var strip = document.createElement('div'); strip.className = 'film-strip';
+    files.forEach(function(f) {
+        var frame = document.createElement('div'); frame.className = 'film-frame';
+        var src = '../images/map/' + slug + '/' + f;
+        frame.innerHTML = '<img src="' + src + '" alt="" onclick="openLb(this.src)" loading="lazy" onerror="this.parentElement.style.display=\'none\'">';
+        strip.appendChild(frame);
+    });
+    wrap.appendChild(strip);
+    ct.appendChild(wrap);
+}
+
+// === 花窗格 ===
+function buildWindow(ct, files) {
+    var grid = document.createElement('div'); grid.className = 'window-grid';
+    files.forEach(function(f) {
+        var pane = document.createElement('div'); pane.className = 'window-pane';
+        var src = '../images/map/' + slug + '/' + f;
+        pane.innerHTML = '<img src="' + src + '" alt="" onclick="openLb(this.src)" loading="lazy" onerror="this.parentElement.style.display=\'none\'">';
+        grid.appendChild(pane);
+    });
+    ct.appendChild(grid);
+}
+
+function openLb(s) { document.getElementById('lbImg').src = s; document.getElementById('lightbox').classList.add('open'); }
+function closeLb() { document.getElementById('lightbox').classList.remove('open'); }
+document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeLb(); });
 </script>
 </body>
 </html>

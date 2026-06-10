@@ -5,6 +5,33 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>时间线 - 我们的故事</title>
     <link rel="stylesheet" href="../css/style.css">
+    <style>
+        .media-row {
+            display: flex; justify-content: center; gap: 16px;
+            margin-top: 16px; flex-wrap: wrap;
+        }
+        .polaroid-frame {
+            display: inline-block;
+            background: #faf7f0;
+            padding: 6px 6px 24px 6px;
+            box-shadow:
+                0 1px 0 rgba(255,255,255,0.6) inset,
+                0 0 0 1px rgba(0,0,0,0.06),
+                0 3px 12px rgba(0,0,0,0.12);
+            border-radius: 2px;
+            transition: transform 0.3s;
+            flex-shrink: 0;
+        }
+        .polaroid-frame:hover {
+            transform: rotate(0deg) !important;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.18);
+        }
+        .polaroid-frame img,
+        .polaroid-frame video {
+            display: block;
+            border-radius: 1px;
+        }
+    </style>
 </head>
 <body>
 
@@ -16,22 +43,44 @@
 
 <script src="../js/main.js"></script>
 <script>
-loadJSON('../data/timeline.json').then(data => {
-    const container = document.getElementById('timeline');
-    data.forEach(item => {
-        const div = document.createElement('div');
+loadJSON('../data/timeline.json').then(function(data) {
+    var container = document.getElementById('timeline');
+    data.forEach(function(item) {
+        var div = document.createElement('div');
         div.className = 'timeline-item card';
-        div.innerHTML = `
-            <div class="timeline-dot"></div>
-            <div class="timeline-date">${item.date}</div>
-            <div class="timeline-title">${item.title}</div>
-            <div class="timeline-desc">${item.desc}</div>
-            ${item.image ? `<img class="timeline-img" src="${item.image}" alt="${item.title}">` : ''}
-        `;
+
+        var mediaHtml = '';
+        if (item.images && item.images.length) {
+            // 最多两张
+            var show = item.images.slice(0, 2);
+            mediaHtml = '<div class="media-row">';
+            show.forEach(function(src, idx) {
+                var isVid = /\.(mp4|MP4|mov|MOV|webm)$/.test(src);
+                var rot = (idx === 0 && show.length === 1) ? (Math.random() - 0.5) * 6
+                    : idx === 0 ? '-' + (1.5 + Math.random() * 2) + 'deg'
+                    : (1.5 + Math.random() * 2) + 'deg';
+                mediaHtml += '<span class="polaroid-frame" style="transform:rotate(' + rot + ');">';
+                if (isVid) {
+                    mediaHtml += '<video src="' + src + '" muted loop playsinline controls style="height:360px;max-width:340px;"></video>';
+                } else {
+                    mediaHtml += '<img src="' + src + '" alt="" style="max-height:380px;max-width:340px;width:auto;height:auto;">';
+                }
+                mediaHtml += '</span>';
+            });
+            mediaHtml += '</div>';
+        }
+
+        div.innerHTML =
+            '<div class="timeline-dot"></div>' +
+            '<div class="timeline-date">' + item.date + '</div>' +
+            '<div class="timeline-title">' + item.title + '</div>' +
+            '<div class="timeline-desc">' + item.desc + '</div>' +
+            mediaHtml;
         container.appendChild(div);
     });
-}).catch(err => {
-    document.getElementById('timeline').innerHTML = '<p style="text-align:center;color:var(--text-light)">加载中...</p>';
+}).catch(function(err) {
+    console.error('Timeline load error:', err);
+    document.getElementById('timeline').innerHTML = '<p style="text-align:center;padding:40px;color:var(--text-muted);">加载失败，请检查数据文件 ✦</p>';
 });
 </script>
 </body>

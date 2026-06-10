@@ -8,66 +8,26 @@
     <link rel="stylesheet" href="../css/style.css">
     <style>
         .main { max-width: 1100px; }
-        body { background: radial-gradient(ellipse at 50% 0%, #1a1a2e 0%, #0a0a0f 60%, #000 100%); }
+        body { background: #f8f4ed; }
         #map { height: 620px; }
-        .map-popup { padding: 10px; max-width: 360px; }
-        .map-popup strong { font-size: 16px; display: block; margin-bottom: 4px; }
-        .map-popup .desc-text { font-size: 13px; color: var(--text-muted); margin-bottom: 10px; }
-        .map-popup .popup-photos { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 4px; }
-        .map-popup .popup-photos img {
-            width: 130px; height: 86px; object-fit: cover; border-radius: 8px;
-            cursor: pointer; transition: transform 0.2s, border-color 0.2s;
-            border: 2px solid transparent;
-        }
-        .map-popup .popup-photos img:hover { transform: scale(1.06); border-color: var(--primary); }
 
         .map-legend {
-            display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; margin-top: 24px;
+            display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-top: 18px;
         }
         .legend-item {
-            display: flex; align-items: center; gap: 6px; font-size: 13px;
-            color: var(--text-muted); cursor: pointer; transition: color 0.2s;
+            display: flex; align-items: center; gap: 5px; font-size: 12px;
+            color: #9b8c7e; cursor: pointer; transition: all 0.2s;
+            padding: 4px 10px; border-radius: 20px; border: 1px solid transparent;
         }
-        .legend-item:hover { color: var(--primary-glow); }
+        .legend-item:hover { color: #c1785c; border-color: rgba(193,120,92,0.2); background: rgba(193,120,92,0.04); }
         .legend-dot {
-            width: 10px; height: 10px; border-radius: 50%;
-            background: var(--primary-glow); box-shadow: 0 0 8px rgba(201,169,110,0.5);
+            width: 7px; height: 7px; border-radius: 50%;
+            background: #c1785c; box-shadow: 0 0 6px rgba(193,120,92,0.3);
         }
-
-        .full-lightbox {
-            position: fixed; inset: 0; z-index: 99999;
-            background: rgba(0,0,0,0.96);
-            display: flex; align-items: center; justify-content: center;
-            opacity: 0; visibility: hidden; transition: all 0.4s;
-        }
-        .full-lightbox.open { opacity: 1; visibility: visible; }
-        .full-lightbox img {
-            max-width: 92vw; max-height: 85vh; border-radius: 12px;
-            transform: scale(0.9); transition: transform 0.4s;
-        }
-        .full-lightbox.open img { transform: scale(1); }
-        .lightbox-close {
-            position: absolute; top: 24px; right: 36px; color: #fff;
-            font-size: 36px; cursor: pointer; opacity: 0.5; z-index: 2;
-        }
-        .lightbox-close:hover { opacity: 1; }
 
         @keyframes markerPulse {
             0% { transform: scale(0.8); opacity: 0.7; }
             100% { transform: scale(2.2); opacity: 0; }
-        }
-
-        /* 永久展开的 tooltip 样式 */
-        .map-permanent-tooltip {
-            background: rgba(20,20,35,0.95) !important;
-            border: 1px solid rgba(201,169,110,0.3) !important;
-            border-radius: 12px !important;
-            padding: 0 !important;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.5) !important;
-            color: var(--text) !important;
-        }
-        .map-permanent-tooltip::before {
-            border-top-color: rgba(201,169,110,0.3) !important;
         }
     </style>
 </head>
@@ -78,11 +38,6 @@
     <p class="page-subtitle">标记的每个地方，都有我们的故事</p>
     <div id="map"></div>
     <div class="map-legend" id="legend"></div>
-</div>
-
-<div class="full-lightbox" id="lightbox" onclick="closeLightbox()">
-    <span class="lightbox-close">&times;</span>
-    <img id="lightboxImg" src="" alt="">
 </div>
 
 <script>
@@ -118,7 +73,10 @@ loadLeaflet(function() {
         { lat: 26.8932, lng: 112.5720, title: '衡阳', slug: 'hengyang',   desc: '衡山脚下，你说要一起看遍世间风景。' },
         { lat: 28.2282, lng: 112.9388, title: '长沙', slug: 'changsha',   desc: '橘子洲头烟花绚烂，茶颜悦色一人一杯。' },
         { lat: 26.0745, lng: 119.2965, title: '福州', slug: 'fuzhou',     desc: '三坊七巷走九遍，鱼丸肉燕吃不够。' },
-        { lat: 25.5037, lng: 119.7891, title: '平潭岛', slug: 'pingtan',  desc: '蓝眼泪划过海岸，像极了爱情的模样。' }
+        { lat: 25.5037, lng: 119.7891, title: '平潭岛', slug: 'pingtan',  desc: '蓝眼泪划过海岸，像极了爱情的模样。' },
+        { lat: 23.6820, lng: 113.0560, title: '清远',   slug: 'qingyuan', desc: '北江竹筏漂流，山野间的清凉回忆。' },
+        { lat: 22.3193, lng: 114.1694, title: '香港',   slug: 'xianggang', desc: '维港霓虹闪烁，和你一起看遍繁华。' },
+        { lat: 29.0316, lng: 111.6985, title: '常德',   slug: 'changde',  desc: '大小河街灯火，桃花源里遇见了你。' }
     ];
 
     var map = L.map('map', { zoomControl: false }).setView([27.5, 113.5], 6);
@@ -132,12 +90,12 @@ loadLeaflet(function() {
 
     L.control.zoom({ position: 'topright' }).addTo(map);
 
-    var goldIcon = L.divIcon({
+    var markerIcon = L.divIcon({
         className: '',
-        html: '<div style="position:relative;width:22px;height:22px;">' +
-            '<div style="position:absolute;inset:-6px;border-radius:50%;border:2px solid rgba(201,169,110,0.4);animation:markerPulse 2s ease-out infinite;"></div>' +
-            '<div style="width:22px;height:22px;border-radius:50%;background:#c9a96e;border:2px solid #fff;box-shadow:0 0 24px rgba(201,169,110,0.9),0 0 48px rgba(201,169,110,0.4);"></div></div>',
-        iconSize: [34, 34], iconAnchor: [17, 17]
+        html: '<div style="position:relative;width:20px;height:20px;">' +
+            '<div style="position:absolute;inset:-5px;border-radius:50%;border:2px solid rgba(193,120,92,0.35);animation:markerPulse 2s ease-out infinite;"></div>' +
+            '<div style="width:20px;height:20px;border-radius:50%;background:#c1785c;border:2px solid #fff;box-shadow:0 0 20px rgba(193,120,92,0.7),0 0 40px rgba(193,120,92,0.3);"></div></div>',
+        iconSize: [30, 30], iconAnchor: [15, 15]
     });
 
     var legendContainer = document.getElementById('legend');
@@ -145,7 +103,7 @@ loadLeaflet(function() {
 
     fetch('../data/map.json').then(function(r) { return r.json(); }).then(function(mapData) {
         places.forEach(function(place) {
-            var marker = L.marker([place.lat, place.lng], { icon: goldIcon }).addTo(map);
+            var marker = L.marker([place.lat, place.lng], { icon: markerIcon }).addTo(map);
             marker.on('click', function() {
                 location.href = 'city.html?city=' + place.slug;
             });
@@ -160,18 +118,6 @@ loadLeaflet(function() {
         });
     });
     });
-
-function openLightbox(src) {
-    var lb = document.getElementById('lightbox');
-    document.getElementById('lightboxImg').src = src;
-    lb.classList.add('open');
-}
-function closeLightbox() {
-    document.getElementById('lightbox').classList.remove('open');
-}
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') closeLightbox();
-});
 </script>
 <script src="../js/main.js"></script>
 </body>
